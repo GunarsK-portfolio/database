@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":dependencyDashboard",
     ":semanticCommits",
     ":separateMajorReleases",
@@ -9,24 +9,38 @@
     ":label(database)"
   ],
   "timezone": "Europe/Riga",
-  "schedule": ["before 6am on monday"],
-
+  "schedule": [
+    "before 6am on monday"
+  ],
   "packageRules": [
     {
-      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
       "groupName": "PostgreSQL & related images",
-      "matchPackagePatterns": ["postgres", "flyway"],
       "automerge": false,
-      "labels": ["docker", "postgres", "flyway"]
+      "labels": [
+        "docker",
+        "postgres",
+        "flyway"
+      ],
+      "matchPackageNames": [
+        "/postgres/",
+        "/flyway/"
+      ]
     },
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "CI/CD workflows",
       "automerge": true,
-      "labels": ["ci"]
+      "labels": [
+        "ci"
+      ]
     }
   ],
-
   "prHourlyLimit": 5,
   "prConcurrentLimit": 10,
   "rebaseWhen": "behind-base-branch"
