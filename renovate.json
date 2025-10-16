@@ -8,36 +8,31 @@
     ":combinePatchMinorReleases",
     ":label(database)"
   ],
-  "prCreation": "immediate",
   "timezone": "Europe/Riga",
-  "schedule": [],
+  "schedule": ["every weekend"],
   "packageRules": [
     {
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose"
-      ],
-      "groupName": "PostgreSQL & related images",
-      "automerge": false,
-      "labels": [
-        "docker",
-        "postgres",
-        "flyway"
-      ],
-      "matchPackageNames": [
-        "/postgres/",
-        "/flyway/"
-      ]
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchPackageNames": ["/postgres/", "/flyway/"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "PostgreSQL & Flyway patches",
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["docker", "postgres", "automerge"]
     },
     {
-      "matchManagers": [
-        "github-actions"
-      ],
-      "groupName": "CI/CD workflows",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchPackageNames": ["/postgres/", "/flyway/"],
+      "matchUpdateTypes": ["minor", "major"],
+      "groupName": "PostgreSQL & Flyway updates",
+      "dependencyDashboardApproval": true,
+      "labels": ["docker", "postgres", "manual-review"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
       "automerge": true,
-      "labels": [
-        "ci"
-      ]
+      "labels": ["ci"]
     }
   ],
   "prHourlyLimit": 5,
