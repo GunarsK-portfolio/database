@@ -25,3 +25,13 @@ CREATE INDEX idx_skills_display_order ON portfolio.skills(display_order);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_skills_updated_at BEFORE UPDATE ON portfolio.skills FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Add table and column comments
+COMMENT ON TABLE portfolio.skills IS 'Individual skills and technologies';
+COMMENT ON COLUMN portfolio.skills.id IS 'Unique skill identifier';
+COMMENT ON COLUMN portfolio.skills.skill IS 'Skill or technology name (e.g., React, PostgreSQL, Docker)';
+COMMENT ON COLUMN portfolio.skills.skill_type_id IS 'Skill category (references portfolio.cl_skill_types)';
+COMMENT ON COLUMN portfolio.skills.is_visible IS 'Show in skills section (FALSE allows tracking project tech without displaying)';
+COMMENT ON COLUMN portfolio.skills.display_order IS 'Display order within skill type';
+COMMENT ON COLUMN portfolio.skills.created_at IS 'Timestamp when skill was created';
+COMMENT ON COLUMN portfolio.skills.updated_at IS 'Timestamp when skill was last updated';

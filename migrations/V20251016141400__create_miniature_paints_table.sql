@@ -16,3 +16,11 @@ CREATE TABLE miniatures.miniature_paints (
 -- Create indexes for queries
 CREATE INDEX idx_miniature_paints_miniature_id ON miniatures.miniature_paints(miniature_project_id);
 CREATE INDEX idx_miniature_paints_paint_id ON miniatures.miniature_paints(paint_id);
+
+-- Add table and column comments
+COMMENT ON TABLE miniatures.miniature_paints IS 'Junction table linking miniature projects to paints (many-to-many)';
+COMMENT ON COLUMN miniatures.miniature_paints.id IS 'Unique identifier';
+COMMENT ON COLUMN miniatures.miniature_paints.miniature_project_id IS 'Miniature project (references miniatures.miniature_projects)';
+COMMENT ON COLUMN miniatures.miniature_paints.paint_id IS 'Paint used (references miniatures.cl_paints)';
+COMMENT ON COLUMN miniatures.miniature_paints.usage_notes IS 'Optional notes about paint usage (e.g., "base coat for skin", "highlights")';
+COMMENT ON COLUMN miniatures.miniature_paints.created_at IS 'Timestamp when link was created';

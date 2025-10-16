@@ -11,6 +11,8 @@ This repository contains:
 - Audit logging for data changes
 - Query performance monitoring (optional)
 
+📖 **[Full Schema Documentation](docs/SCHEMA.md)** - Detailed table definitions, relationships, and column descriptions
+
 ## Tech Stack
 
 - **Database**: PostgreSQL 18

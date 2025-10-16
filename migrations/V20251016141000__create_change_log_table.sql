@@ -28,7 +28,18 @@ CREATE INDEX idx_change_log_table_record ON audit.change_log(table_name, record_
 -- Composite index for "show me all changes by this user"
 CREATE INDEX idx_change_log_user_time ON audit.change_log(user_id, changed_at DESC);
 
+-- Add table and column comments
 COMMENT ON TABLE audit.change_log IS 'Audit trail of all data changes in the system';
+COMMENT ON COLUMN audit.change_log.id IS 'Unique audit log identifier';
+COMMENT ON COLUMN audit.change_log.table_name IS 'Name of the table that was modified';
+COMMENT ON COLUMN audit.change_log.schema_name IS 'Schema name (auth, portfolio, miniatures, storage)';
+COMMENT ON COLUMN audit.change_log.record_id IS 'ID of the record that was modified';
+COMMENT ON COLUMN audit.change_log.action IS 'Action performed: INSERT, UPDATE, or DELETE';
+COMMENT ON COLUMN audit.change_log.user_id IS 'User ID who made the change (NULL for system/migration changes)';
+COMMENT ON COLUMN audit.change_log.username IS 'Username denormalized for easy querying';
+COMMENT ON COLUMN audit.change_log.changed_at IS 'Timestamp when change occurred';
 COMMENT ON COLUMN audit.change_log.old_data IS 'JSONB snapshot of record before change (NULL for INSERT)';
 COMMENT ON COLUMN audit.change_log.new_data IS 'JSONB snapshot of record after change (NULL for DELETE)';
 COMMENT ON COLUMN audit.change_log.changed_fields IS 'Array of field names that were modified (UPDATE only)';
+COMMENT ON COLUMN audit.change_log.client_ip IS 'Optional: client IP address for additional context';
+COMMENT ON COLUMN audit.change_log.user_agent IS 'Optional: client user agent for additional context';

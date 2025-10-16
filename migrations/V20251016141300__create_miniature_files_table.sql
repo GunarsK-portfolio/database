@@ -18,3 +18,12 @@ CREATE TABLE miniatures.miniature_files (
 CREATE INDEX idx_miniature_files_miniature_id ON miniatures.miniature_files(miniature_project_id);
 CREATE INDEX idx_miniature_files_file_id ON miniatures.miniature_files(file_id);
 CREATE INDEX idx_miniature_files_display_order ON miniatures.miniature_files(miniature_project_id, display_order);
+
+-- Add table and column comments
+COMMENT ON TABLE miniatures.miniature_files IS 'Junction table linking miniature projects to images (many-to-many)';
+COMMENT ON COLUMN miniatures.miniature_files.id IS 'Unique identifier';
+COMMENT ON COLUMN miniatures.miniature_files.miniature_project_id IS 'Miniature project (references miniatures.miniature_projects)';
+COMMENT ON COLUMN miniatures.miniature_files.file_id IS 'Image file from S3 (references storage.files)';
+COMMENT ON COLUMN miniatures.miniature_files.caption IS 'Optional image caption';
+COMMENT ON COLUMN miniatures.miniature_files.display_order IS 'Order for displaying images in gallery';
+COMMENT ON COLUMN miniatures.miniature_files.created_at IS 'Timestamp when link was created';
