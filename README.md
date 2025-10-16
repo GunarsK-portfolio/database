@@ -7,241 +7,239 @@ PostgreSQL database schema with Flyway migrations for the portfolio project.
 This repository contains:
 - Database schema migrations (Flyway versioned)
 - Seed data for development
-- Flyway configuration
 - Database setup scripts
+- Audit logging for data changes
+- Query performance monitoring (optional)
 
 ## Tech Stack
 
 - **Database**: PostgreSQL 18
 - **Migration Tool**: Flyway 11
-- **Version Control**: Flyway versioned migrations
+- **Extensions**: pg_stat_statements (query performance)
 
-## Prerequisites
+## Database Architecture
 
-- PostgreSQL 18+ (or use Docker Compose)
-- Flyway CLI (optional, for local migrations)
-- Java 11+ (required by Flyway)
+### Schemas
 
-## Database Schema
+| Schema | Purpose | Tables |
+|--------|---------|--------|
+| `auth` | Authentication | users |
+| `portfolio` | Professional portfolio | profile, work_experience, certifications, portfolio_projects, skills, project_technologies, cl_skill_types |
+| `miniatures` | Miniature painting | miniature_themes, miniature_projects, miniature_techniques, miniature_paints, miniature_files, cl_techniques, cl_paints |
+| `storage` | File storage (S3) | files |
+| `audit` | Change tracking | change_log, query_stats (view) |
 
-The database includes tables for:
-- **users** - User accounts (auth)
-- **profile** - Portfolio profile information
-- **work_experience** - Work experience entries
-- **certifications** - Professional certifications
-- **skills** - Technical skills with categorization
-- **portfolio_projects** - Coding projects portfolio
-- **project_technologies** - Skills used in projects (junction table)
-- **miniature_projects** - Miniature painting projects
-- **miniature_themes** - Gallery themes for organizing miniatures
-- **images** - Image metadata and references
+### Database Users
 
-See [docs/SCHEMA.md](docs/SCHEMA.md) for detailed schema documentation.
+| User | Password (dev) | Purpose |
+|------|----------------|---------|
+| `portfolio_owner` | portfolio_owner_dev_pass | Flyway migrations (DDL) |
+| `portfolio_admin` | portfolio_admin_dev_pass | Admin API (CRUD) |
+| `portfolio_public` | portfolio_public_dev_pass | Public API (SELECT only) |
+
+⚠️ **Change passwords in production!**
 
 ## Quick Start
 
-### Using Docker Compose
-
-Migrations run automatically when starting the infrastructure:
+### Using Docker Compose (Recommended)
 
 ```bash
-# From infrastructure directory
+# From database directory
+docker-compose up
+
+# Or from infrastructure directory
 docker-compose up -d
 ```
 
-The Flyway service will:
-1. Wait for PostgreSQL to be healthy
-2. Run all versioned migrations (V*.sql)
-3. Run repeatable migrations (R*.sql - seeds)
-4. Exit when complete
+Migrations run automatically on startup.
 
-### Manual Migration with Flyway CLI
-
-1. Ensure PostgreSQL is running
-
-2. Update [flyway.conf](flyway.conf) with your connection details:
-```properties
-flyway.url=jdbc:postgresql://localhost:5432/portfolio
-flyway.user=portfolio_user
-flyway.password=portfolio_pass
-flyway.locations=filesystem:./migrations
-flyway.baselineOnMigrate=true
-```
-
-3. Run migrations:
-```bash
-flyway -configFiles=flyway.conf migrate
-```
-
-## Migration Files
-
-### Versioned Migrations (`migrations/`)
-
-Format: `V{version}__{description}.sql`
-
-**Schema Migrations:**
-| File | Description |
-|------|-------------|
-| `V20251016140000__create_users_table.sql` | Users table for authentication |
-| `V20251016140100__create_profile_table.sql` | Portfolio profile |
-| `V20251016140200__create_work_experience_table.sql` | Work experience entries |
-| `V20251016140300__create_certifications_table.sql` | Professional certifications |
-| `V20251016140400__create_miniature_projects_table.sql` | Miniature painting projects |
-| `V20251016140500__create_images_table.sql` | Image metadata |
-| `V20251016140600__create_portfolio_projects_table.sql` | Coding projects |
-| `V20251016140700__create_skills_table.sql` | Technical skills |
-| `V20251016140800__create_project_technologies_table.sql` | Project-skill relationships |
-| `V20251016140900__create_miniature_themes_table.sql` | Gallery themes |
-| `V20251016141000__add_miniature_projects_theme.sql` | Add theme FK to miniatures |
-| `V20251016141100__add_miniature_projects_details.sql` | Add miniature details fields |
-| `V20251016141200__add_portfolio_projects_featured.sql` | Add featured flag |
-
-### Repeatable Migrations (`seeds/`)
-
-Format: `R__{description}.sql`
-
-| File | Description |
-|------|-------------|
-| `R__seed_admin_user.sql` | Default admin user |
-| `R__seed_sample_data.sql` | Sample portfolio data |
-
-Repeatable migrations run after versioned migrations and re-run whenever their content changes.
-
-## Flyway Commands
-
-Using Flyway CLI:
+### Manual Migration
 
 ```bash
+# Ensure PostgreSQL is running
+docker-compose up -d postgres
+
 # Run migrations
-flyway -configFiles=flyway.conf migrate
+docker-compose run --rm flyway migrate
+```
 
-# Check migration status
-flyway -configFiles=flyway.conf info
+## Migrations
 
-# Validate migrations
-flyway -configFiles=flyway.conf validate
+**23 versioned migrations** + **5 seed files** = Complete database setup
 
-# Baseline existing database
-flyway -configFiles=flyway.conf baseline
+Includes:
+- Database users and schemas
+- Core tables (users, profile, work experience, certifications, projects, skills)
+- Miniature painting tables (themes, projects, techniques, paints, files)
+- Audit logging with automatic triggers
+- Query performance monitoring setup
+- Seed data: admin user, 120+ paints, 20 techniques, skill types, sample portfolio data
 
-# Clean database (DANGER: deletes all data)
-flyway -configFiles=flyway.conf clean
+## Features
+
+### Audit Logging ✅
+
+All data changes (INSERT/UPDATE/DELETE) are automatically tracked in `audit.change_log`.
+
+**View audit trail:**
+```sql
+SELECT * FROM audit.change_log
+WHERE table_name = 'portfolio_projects'
+  AND record_id = 123
+ORDER BY changed_at DESC;
+```
+
+### Query Performance Monitoring ✅ (Optional)
+
+Track query execution times with `pg_stat_statements`.
+
+**View slow queries:**
+```sql
+SELECT * FROM audit.query_stats
+WHERE mean_exec_time > 100
+ORDER BY total_exec_time DESC;
+```
+
+## Database Connection
+
+### Connection Strings
+
+```bash
+# Owner (for migrations)
+postgresql://portfolio_owner:portfolio_owner_dev_pass@localhost:5432/portfolio
+
+# Admin (for admin-api, auth-service)
+postgresql://portfolio_admin:portfolio_admin_dev_pass@localhost:5432/portfolio
+
+# Public (for public-api)
+postgresql://portfolio_public:portfolio_public_dev_pass@localhost:5432/portfolio
+```
+
+### Access via psql
+
+```bash
+# As admin user
+docker exec -it postgres psql -U portfolio_admin -d portfolio
+
+# As owner (for migrations)
+docker exec -it postgres psql -U portfolio_owner -d portfolio
 ```
 
 ## Creating New Migrations
 
-1. Create a new versioned migration file:
+1. Create file with timestamp:
 ```bash
-# Format: V{timestamp}__{description}.sql
-# Example:
-touch migrations/V20241010120000__add_tags_table.sql
+# Format: V{YYYYMMDDHHMMSS}__{description}.sql
+touch migrations/V20251016150000__add_new_table.sql
 ```
 
-2. Write your SQL:
+2. Write SQL:
 ```sql
-CREATE TABLE tags (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
+CREATE TABLE portfolio.new_table (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add audit trigger
+CREATE TRIGGER audit_new_table
+    AFTER INSERT OR UPDATE OR DELETE ON portfolio.new_table
+    FOR EACH ROW EXECUTE FUNCTION audit.log_change();
 ```
 
-3. Run migrations to apply:
+3. Apply migration:
 ```bash
-flyway -configFiles=flyway.conf migrate
-```
-
-## Seed Data
-
-Seed files in `seeds/` directory:
-- `R__seed_admin_user.sql` - Creates default admin account
-- `R__seed_sample_data.sql` - Adds sample portfolio content
-
-These run automatically when using Docker Compose.
-
-## Database Connection
-
-Default connection details:
-
-| Parameter | Value |
-|-----------|-------|
-| **Host** | `localhost` |
-| **Port** | `5432` |
-| **Database** | `portfolio` |
-| **User** | `portfolio_user` |
-| **Password** | `portfolio_pass` |
-
-### Connection String
-```
-postgresql://portfolio_user:portfolio_pass@localhost:5432/portfolio
-```
-
-## Accessing Database
-
-### Using Docker
-```bash
-docker exec -it postgres psql -U portfolio_user -d portfolio
-```
-
-### Using psql directly
-```bash
-psql -h localhost -U portfolio_user -d portfolio
-```
-
-## Backup and Restore
-
-### Backup
-```bash
-docker exec postgres pg_dump -U portfolio_user portfolio > backup.sql
-```
-
-### Restore
-```bash
-docker exec -i postgres psql -U portfolio_user portfolio < backup.sql
-```
-
-## Development
-
-For local development:
-
-1. Start PostgreSQL:
-```bash
-# From infrastructure directory
-docker-compose up -d postgres
-```
-
-2. Run migrations:
-```bash
-flyway -configFiles=flyway.conf migrate
+docker-compose run --rm flyway migrate
 ```
 
 ## Integration
 
 This database is used by:
-- **auth-service** - User authentication
-- **public-api** - Read-only public content
-- **admin-api** - Full CRUD operations
+
+| Service | User | Access |
+|---------|------|--------|
+| Flyway | portfolio_owner | DDL + CRUD |
+| auth-service | portfolio_admin | CRUD |
+| admin-api | portfolio_admin | CRUD |
+| public-api | portfolio_public | SELECT only |
+
+## Backup and Restore
+
+### Backup
+```bash
+docker exec postgres pg_dump -U portfolio_owner portfolio > backup_$(date +%Y%m%d).sql
+```
+
+### Restore
+```bash
+docker exec -i postgres psql -U portfolio_owner portfolio < backup_20251016.sql
+```
 
 ## Troubleshooting
 
-### Migrations not running
-Check Flyway container logs:
+### Check migration status
+```bash
+docker-compose run --rm flyway info
+```
+
+### View Flyway logs
 ```bash
 docker logs flyway
 ```
 
-### Database connection issues
-Verify PostgreSQL is running and healthy:
-```bash
-docker-compose ps postgres
-docker exec postgres pg_isready
-```
-
-### Reset database
+### Reset database (⚠️ destroys all data)
 ```bash
 # From infrastructure directory
-docker-compose down -v  # Remove volumes
-docker-compose up -d    # Recreate and run migrations
+docker-compose down -v
+docker-compose up -d postgres
+docker-compose run --rm flyway migrate
+```
+
+### Check database size
+```sql
+SELECT
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+FROM pg_tables
+WHERE schemaname IN ('auth', 'portfolio', 'miniatures', 'storage', 'audit')
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+
+## Development
+
+### Local setup
+
+1. Start PostgreSQL:
+```bash
+docker-compose up -d postgres
+```
+
+2. Run migrations:
+```bash
+docker-compose run --rm flyway migrate
+```
+
+3. Connect with your favorite client:
+- DBeaver
+- pgAdmin
+- psql
+- TablePlus
+
+### Flyway commands
+
+```bash
+# Run migrations
+docker-compose run --rm flyway migrate
+
+# Check status
+docker-compose run --rm flyway info
+
+# Validate checksums
+docker-compose run --rm flyway validate
+
+# Repair migration history
+docker-compose run --rm flyway repair
 ```
 
 ## License
