@@ -146,7 +146,7 @@ VALUES
     ('Dark Silver', 'Army Painter', '#696969'),
     ('Shining Silver', 'Army Painter', '#E8E8E8'),
     ('Gun Metal', 'Army Painter', '#2C3539'),
-    ('Rough Iron', 'Army Painter', '#5C5C5C'))
+    ('Rough Iron', 'Army Painter', '#5C5C5C')
 
 ON CONFLICT (name, manufacturer) DO UPDATE SET
     color_hex = EXCLUDED.color_hex;
