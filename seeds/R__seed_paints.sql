@@ -122,7 +122,7 @@ VALUES
     ('Brainmatter Beige', 'Army Painter', '#C9A9A6'),
     ('Glistening Blood', 'Army Painter', '#8B0000'),
     ('Toxic Boils', 'Army Painter', '#9ACD32'),
-    ('Hydra Turquoise', 'Army Parser', '#00CED1'),
+    ('Hydra Turquoise', 'Army Painter', '#00CED1'),
     ('Scaly Hide', 'Army Painter', '#4B5320'),
     ('Dirt Spatter', 'Army Painter', '#8B7355'),
     ('Arid Earth', 'Army Painter', '#D2B48C'),
