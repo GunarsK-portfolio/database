@@ -29,7 +29,11 @@ The database includes tables for:
 - **profile** - Portfolio profile information
 - **work_experience** - Work experience entries
 - **certifications** - Professional certifications
-- **miniature_projects** - Portfolio projects
+- **skills** - Technical skills with categorization
+- **portfolio_projects** - Coding projects portfolio
+- **project_technologies** - Skills used in projects (junction table)
+- **miniature_projects** - Miniature painting projects
+- **miniature_themes** - Gallery themes for organizing miniatures
 - **images** - Image metadata and references
 
 See [docs/SCHEMA.md](docs/SCHEMA.md) for detailed schema documentation.
@@ -75,14 +79,22 @@ flyway -configFiles=flyway.conf migrate
 
 Format: `V{version}__{description}.sql`
 
+**Schema Migrations:**
 | File | Description |
 |------|-------------|
-| `V20241009140000__create_users_table.sql` | Users table for authentication |
-| `V20241009140100__create_profile_table.sql` | Portfolio profile |
-| `V20241009140200__create_work_experience_table.sql` | Work experience entries |
-| `V20241009140300__create_certifications_table.sql` | Professional certifications |
-| `V20241009140400__create_miniature_projects_table.sql` | Portfolio projects |
-| `V20241009140500__create_images_table.sql` | Image metadata |
+| `V20251016140000__create_users_table.sql` | Users table for authentication |
+| `V20251016140100__create_profile_table.sql` | Portfolio profile |
+| `V20251016140200__create_work_experience_table.sql` | Work experience entries |
+| `V20251016140300__create_certifications_table.sql` | Professional certifications |
+| `V20251016140400__create_miniature_projects_table.sql` | Miniature painting projects |
+| `V20251016140500__create_images_table.sql` | Image metadata |
+| `V20251016140600__create_portfolio_projects_table.sql` | Coding projects |
+| `V20251016140700__create_skills_table.sql` | Technical skills |
+| `V20251016140800__create_project_technologies_table.sql` | Project-skill relationships |
+| `V20251016140900__create_miniature_themes_table.sql` | Gallery themes |
+| `V20251016141000__add_miniature_projects_theme.sql` | Add theme FK to miniatures |
+| `V20251016141100__add_miniature_projects_details.sql` | Add miniature details fields |
+| `V20251016141200__add_portfolio_projects_featured.sql` | Add featured flag |
 
 ### Repeatable Migrations (`seeds/`)
 
