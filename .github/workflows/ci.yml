@@ -90,22 +90,20 @@ jobs:
         run: |
           docker run --rm \
             --network host \
+            -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             -v ${{ github.workspace }}/docker/postgres:/scripts \
             postgres:18 \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -f /scripts/init-users.sql
-        env:
-          PGPASSWORD: ${{ secrets.CI_DB_PASSWORD }}
 
       - name: Initialize PostgreSQL extensions
         run: |
           docker run --rm \
             --network host \
+            -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             postgres:18 \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements; CREATE EXTENSION IF NOT EXISTS pg_cron;"
-        env:
-          PGPASSWORD: ${{ secrets.CI_DB_PASSWORD }}
 
       - name: Run Flyway migrations
         run: |
