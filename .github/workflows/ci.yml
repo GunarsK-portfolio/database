@@ -102,17 +102,8 @@ jobs:
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             ghcr.io/dbsystel/postgresql-partman:17-5 \
-            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} <<'EOF'
-          CREATE SCHEMA IF NOT EXISTS cron;
-          CREATE TABLE IF NOT EXISTS cron.job (
-            jobid bigserial primary key, schedule text, command text,
-            nodename text, nodeport int, database text, username text, active boolean
-          );
-          CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text)
-          RETURNS bigint AS \$\$ SELECT 1::bigint; \$\$ LANGUAGE SQL;
-          GRANT USAGE ON SCHEMA cron TO portfolio_owner;
-          GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;
-          EOF
+            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
+            -c "CREATE SCHEMA IF NOT EXISTS cron; CREATE TABLE IF NOT EXISTS cron.job (jobid bigserial primary key, schedule text, command text, nodename text, nodeport int, database text, username text, active boolean); CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text) RETURNS bigint AS \$\$ SELECT 1::bigint; \$\$ LANGUAGE SQL; GRANT USAGE ON SCHEMA cron TO portfolio_owner; GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;"
 
       - name: Run Flyway migrations
         run: |
