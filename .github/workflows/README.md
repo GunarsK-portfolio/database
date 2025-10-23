@@ -35,7 +35,7 @@ Configure these secrets in your repository:
 |--------|-------------|---------------|
 | `CI_DB_USER` | PostgreSQL superuser for CI tests | `postgres` |
 | `CI_DB_PASSWORD` | Password for CI database | `test_password_123` |
-| `CI_DB_NAME` | Database name for CI tests | `portfolio_test` |
+| `CI_DB_NAME` | Database name for CI tests (must be `postgres` for pg_cron) | `postgres` |
 
 These credentials are only used for temporary test databases created during CI runs.
 

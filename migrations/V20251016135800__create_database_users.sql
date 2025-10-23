@@ -6,7 +6,8 @@
 -- 1. OWNER USER (for migrations and DDL)
 -- =============================================================================
 -- Ensure portfolio_owner has all necessary privileges (already granted in init script)
-GRANT ALL PRIVILEGES ON DATABASE portfolio TO portfolio_owner;
+-- Note: Database-level grants use current_database() to work with any database name
+EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO portfolio_owner', current_database());
 GRANT ALL PRIVILEGES ON SCHEMA public TO portfolio_owner;
 
 
@@ -14,14 +15,14 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO portfolio_owner;
 -- 2. ADMIN USER (for admin services - CRUD access)
 -- =============================================================================
 -- Basic permissions - detailed schema permissions granted in V20251016135900
-GRANT CONNECT ON DATABASE portfolio TO portfolio_admin;
+EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_admin', current_database());
 
 
 -- =============================================================================
 -- 3. PUBLIC USER (for public API - read-only access)
 -- =============================================================================
 -- Basic permissions - detailed schema permissions granted in V20251016135900
-GRANT CONNECT ON DATABASE portfolio TO portfolio_public;
+EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_public', current_database());
 
 
 -- =============================================================================
