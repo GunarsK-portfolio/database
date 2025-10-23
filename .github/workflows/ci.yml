@@ -96,8 +96,14 @@ jobs:
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -f /scripts/init-users.sql
 
-      - name: Initialize PostgreSQL extensions
+      - name: Install and initialize PostgreSQL extensions
         run: |
+          # Install pg_cron extension in the postgres service container
+          docker exec $(docker ps -qf "ancestor=postgres:18") bash -c "
+            apt-get update &&
+            apt-get install -y postgresql-18-cron
+          "
+          # Create extensions
           docker run --rm \
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
