@@ -66,11 +66,11 @@ GRANT USAGE, SELECT ON SEQUENCE audit.action_log_id_seq TO portfolio_public;
 -- Note: pg_partman v5+ only supports native partitioning, p_type parameter is deprecated
 -- p_premake creates future partitions: 1 = current + next month
 SELECT partman.create_parent(
-    p_parent_table := 'audit.action_log',
-    p_control := 'created_at',
-    p_interval := '1 month',
+    p_parent_table := 'audit.action_log'::text,
+    p_control := 'created_at'::text,
+    p_interval := '1 month'::text,
     p_premake := 1,
-    p_start_partition := to_char(current_date, 'YYYY-MM-01')
+    p_start_partition := to_char(current_date, 'YYYY-MM-01')::text
 );
 
 -- Configure retention policy (drop partitions older than 12 months)
