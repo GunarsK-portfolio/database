@@ -72,4 +72,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE portfolio_owner IN SCHEMA storage GRANT SELECT
 
 -- Set search_path to include all schemas for convenience
 -- This allows you to reference tables without schema prefix in GORM
-ALTER DATABASE portfolio SET search_path TO public, auth, portfolio, miniatures, storage; -- noqa: disable=PRS
+-- Note: Uses current_database() to work with any database name
+DO $$
+BEGIN
+    EXECUTE format('ALTER DATABASE %I SET search_path TO public, auth, portfolio, miniatures, storage', current_database()); -- noqa: disable=PRS
+END $$;

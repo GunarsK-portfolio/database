@@ -1,5 +1,7 @@
--- Bootstrap database users for Flyway and application access
--- This script runs on PostgreSQL container initialization before Flyway migrations
+-- Bootstrap database users for CI testing
+-- Note: Extensions (pg_stat_statements, pg_cron, pg_partman) are automatically
+-- created by the postgres-image's /docker-entrypoint-initdb.d/init-extensions.sql
+-- This script only needs to create users and grant them necessary permissions
 
 -- OWNER USER (for Flyway migrations - DDL + CRUD access)
 DO $$
@@ -65,9 +67,21 @@ GRANT CONNECT ON DATABASE portfolio TO portfolio_public;
 COMMENT ON ROLE portfolio_public IS 'Public API user - SELECT only';
 
 -- =============================================================================
--- EXTENSIONS - Installed as superuser before migrations run
+-- EXTENSION PERMISSIONS
 -- =============================================================================
+-- Extensions are created by postgres-image's 00-init-extensions.sql
+-- Here we grant necessary permissions to application users
 
--- Enable pg_stat_statements for query performance monitoring
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-COMMENT ON EXTENSION pg_stat_statements IS 'Track planning and execution statistics of all SQL statements';
+-- Grant pg_cron schema access to portfolio_owner (needed for scheduling jobs in migrations)
+GRANT USAGE ON SCHEMA cron TO portfolio_owner;
+GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;
+
+-- Grant pg_partman schema access to portfolio_owner (needed for partition management)
+-- Transfer ownership of partman schema and all objects to allow partition management
+ALTER SCHEMA partman OWNER TO portfolio_owner;
+GRANT ALL ON SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL TABLES IN SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA partman TO portfolio_owner;
+ALTER TABLE partman.part_config OWNER TO portfolio_owner;
+ALTER TABLE partman.part_config_sub OWNER TO portfolio_owner;

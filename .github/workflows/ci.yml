@@ -42,7 +42,7 @@ jobs:
 
     services:
       postgres:
-        image: ghcr.io/dbsystel/postgresql-partman:17-5
+        image: ghcr.io/gunarsk-portfolio/postgres-image:latest
         env:
           POSTGRES_USER: ${{ secrets.CI_DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
@@ -92,18 +92,9 @@ jobs:
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             -v ${{ github.workspace }}/docker/postgres:/scripts \
-            ghcr.io/dbsystel/postgresql-partman:17-5 \
+            ghcr.io/gunarsk-portfolio/postgres-image:latest \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -f /scripts/init-users.sql
-
-      - name: Create stub for pg_cron (not available in this image)
-        run: |
-          docker run --rm \
-            --network host \
-            -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
-            ghcr.io/dbsystel/postgresql-partman:17-5 \
-            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
-            -c "CREATE SCHEMA IF NOT EXISTS cron; CREATE TABLE IF NOT EXISTS cron.job (jobid bigserial primary key, schedule text, command text, nodename text, nodeport int, database text, username text, active boolean); CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text) RETURNS bigint AS \$\$ SELECT 1::bigint; \$\$ LANGUAGE SQL; GRANT USAGE ON SCHEMA cron TO portfolio_owner; GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;"
 
       - name: Run Flyway migrations
         run: |
