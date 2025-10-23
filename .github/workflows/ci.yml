@@ -42,7 +42,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:18
         env:
           POSTGRES_USER: ${{ secrets.CI_DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
@@ -85,6 +85,27 @@ jobs:
             prev="$current"
           done
           echo "Migration files are in correct chronological order"
+
+      - name: Initialize database users
+        run: |
+          docker run --rm \
+            --network host \
+            -v ${{ github.workspace }}/docker/postgres:/scripts \
+            postgres:18 \
+            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
+            -f /scripts/init-users.sql
+        env:
+          PGPASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+
+      - name: Initialize PostgreSQL extensions
+        run: |
+          docker run --rm \
+            --network host \
+            postgres:18 \
+            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
+            -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements; CREATE EXTENSION IF NOT EXISTS pg_cron;"
+        env:
+          PGPASSWORD: ${{ secrets.CI_DB_PASSWORD }}
 
       - name: Run Flyway migrations
         run: |
