@@ -133,10 +133,10 @@ jobs:
           );
           CREATE OR REPLACE FUNCTION partman.create_parent(
             p_parent_table text, p_control text, p_interval text,
-            p_premake int DEFAULT 4, p_start_partition text DEFAULT NULL
-          ) RETURNS boolean AS $$ SELECT true; $$ LANGUAGE SQL;
+            p_premake integer DEFAULT 4, p_start_partition text DEFAULT NULL
+          ) RETURNS boolean AS \$func\$ BEGIN RETURN true; END; \$func\$ LANGUAGE plpgsql;
           CREATE OR REPLACE FUNCTION partman.run_maintenance()
-          RETURNS void AS $$ SELECT; $$ LANGUAGE SQL;
+          RETURNS void AS \$func\$ BEGIN RETURN; END; \$func\$ LANGUAGE plpgsql;
           GRANT USAGE ON SCHEMA partman TO portfolio_owner;
           GRANT ALL ON ALL TABLES IN SCHEMA partman TO portfolio_owner;
           EOF
