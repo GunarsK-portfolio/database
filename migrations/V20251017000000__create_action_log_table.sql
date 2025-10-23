@@ -2,9 +2,17 @@
 -- This table logs all significant user actions: logins, downloads, uploads, etc.
 -- Uses monthly partitioning with automatic partition creation and 12-month retention via pg_partman
 
--- Create partman schema and enable pg_partman extension
+-- Create partman schema and enable pg_partman extension (if available)
 CREATE SCHEMA IF NOT EXISTS partman;
-CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
+-- Only create extension if pg_partman is installed (skipped in CI with stub functions)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_partman') THEN
+        CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
+    ELSE
+        RAISE NOTICE 'pg_partman extension not available, using stub functions (CI mode)';
+    END IF;
+END $$;
 
 -- Create sequence for ID (BIGSERIAL doesn't work with partitioned tables)
 CREATE SEQUENCE audit.action_log_id_seq;
