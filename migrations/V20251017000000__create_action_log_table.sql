@@ -2,17 +2,9 @@
 -- This table logs all significant user actions: logins, downloads, uploads, etc.
 -- Uses monthly partitioning with automatic partition creation and 12-month retention via pg_partman
 
--- Create partman schema and enable pg_partman extension (if available)
+-- Create partman schema and enable pg_partman extension
 CREATE SCHEMA IF NOT EXISTS partman;
--- Only create extension if pg_partman is installed (skipped in CI with stub functions)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_partman') THEN
-        CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
-    ELSE
-        RAISE NOTICE 'pg_partman extension not available, using stub functions (CI mode)';
-    END IF;
-END $$;
+CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
 
 -- Create sequence for ID (BIGSERIAL doesn't work with partitioned tables)
 CREATE SEQUENCE audit.action_log_id_seq;
@@ -66,11 +58,11 @@ GRANT USAGE, SELECT ON SEQUENCE audit.action_log_id_seq TO portfolio_public;
 -- Note: pg_partman v5+ only supports native partitioning, p_type parameter is deprecated
 -- p_premake creates future partitions: 1 = current + next month
 SELECT partman.create_parent(
-    p_parent_table := 'audit.action_log'::text,
-    p_control := 'created_at'::text,
-    p_interval := '1 month'::text,
+    p_parent_table := 'audit.action_log',
+    p_control := 'created_at',
+    p_interval := '1 month',
     p_premake := 1,
-    p_start_partition := to_char(current_date, 'YYYY-MM-01')::text
+    p_start_partition := to_char(current_date, 'YYYY-MM-01')
 );
 
 -- Configure retention policy (drop partitions older than 12 months)
