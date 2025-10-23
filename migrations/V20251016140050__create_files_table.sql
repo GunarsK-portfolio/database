@@ -8,15 +8,16 @@ CREATE TABLE storage.files (
     file_name VARCHAR(255),
     file_size BIGINT,
     mime_type VARCHAR(100),
-    file_type VARCHAR(50), -- 'image', 'pdf', 'document', etc. for easier filtering
+    -- 'image', 'pdf', 'document', etc. for easier filtering
+    file_type VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on s3_key for lookups
-CREATE INDEX idx_files_s3_key ON storage.files(s3_key);
+CREATE INDEX idx_files_s3_key ON storage.files (s3_key);
 
 -- Create index on file_type for filtering
-CREATE INDEX idx_files_file_type ON storage.files(file_type);
+CREATE INDEX idx_files_file_type ON storage.files (file_type);
 
 -- Add table and column comments
 COMMENT ON TABLE storage.files IS 'Generic S3 file storage for images, PDFs, documents, and other files';

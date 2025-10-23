@@ -1,5 +1,7 @@
 # Database
 
+![CI](https://github.com/GunarsK-portfolio/database/workflows/CI/badge.svg)
+
 PostgreSQL database schema with Flyway migrations for the portfolio project.
 
 ## Overview
@@ -242,6 +244,28 @@ docker-compose run --rm flyway validate
 
 # Repair migration history
 docker-compose run --rm flyway repair
+```
+
+## Available Commands
+
+This project uses [Task](https://taskfile.dev) for development commands:
+
+```bash
+# Database operations
+task up              # Start PostgreSQL database
+task down            # Stop database
+task logs            # View database logs
+task migrate         # Run Flyway migrations
+task clean           # Remove database and volumes
+task psql            # Connect to database with psql
+
+# CI/CD checks
+task validate        # Validate docker-compose syntax
+task lint-yaml       # Lint YAML files
+task lint-sql        # Lint SQL migration files
+task check-migrations # Validate migration file naming
+task ci              # Run all CI checks locally
+task install-tools   # Install CI/CD tools (yamllint, sqlfluff, markdownlint-cli2)
 ```
 
 ## License

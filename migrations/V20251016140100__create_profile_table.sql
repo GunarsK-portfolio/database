@@ -12,9 +12,9 @@ CREATE TABLE portfolio.profile (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_avatar_file FOREIGN KEY (avatar_file_id)
-        REFERENCES storage.files(id) ON DELETE SET NULL,
+    REFERENCES storage.files (id) ON DELETE SET NULL,
     CONSTRAINT fk_resume_file FOREIGN KEY (resume_file_id)
-        REFERENCES storage.files(id) ON DELETE SET NULL
+    REFERENCES storage.files (id) ON DELETE SET NULL
 );
 
 -- Create trigger to automatically update updated_at

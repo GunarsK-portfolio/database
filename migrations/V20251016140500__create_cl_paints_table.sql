@@ -11,8 +11,8 @@ CREATE TABLE miniatures.cl_paints (
 );
 
 -- Create indexes
-CREATE INDEX idx_paints_manufacturer ON miniatures.cl_paints(manufacturer);
-CREATE INDEX idx_paints_name ON miniatures.cl_paints(name);
+CREATE INDEX idx_paints_manufacturer ON miniatures.cl_paints (manufacturer);
+CREATE INDEX idx_paints_name ON miniatures.cl_paints (name);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_paints_updated_at BEFORE UPDATE ON miniatures.cl_paints FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

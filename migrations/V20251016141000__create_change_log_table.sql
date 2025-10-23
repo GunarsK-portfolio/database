@@ -10,23 +10,27 @@ CREATE TABLE audit.change_log (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     old_data JSONB, -- Previous values (NULL for INSERT)
     new_data JSONB, -- New values (NULL for DELETE)
-    changed_fields TEXT[], -- Array of field names that changed (for UPDATE)
+    changed_fields TEXT [], -- Array of field names that changed (for UPDATE)
     client_ip VARCHAR(50), -- Optional: for additional context
     user_agent TEXT -- Optional: for additional context
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_change_log_table_name ON audit.change_log(table_name);
-CREATE INDEX idx_change_log_record_id ON audit.change_log(record_id);
-CREATE INDEX idx_change_log_user_id ON audit.change_log(user_id);
-CREATE INDEX idx_change_log_changed_at ON audit.change_log(changed_at DESC);
-CREATE INDEX idx_change_log_action ON audit.change_log(action);
+CREATE INDEX idx_change_log_table_name ON audit.change_log (table_name);
+CREATE INDEX idx_change_log_record_id ON audit.change_log (record_id);
+CREATE INDEX idx_change_log_user_id ON audit.change_log (user_id);
+CREATE INDEX idx_change_log_changed_at ON audit.change_log (changed_at DESC);
+CREATE INDEX idx_change_log_action ON audit.change_log (action);
 
 -- Composite index for "show me all changes to this record"
-CREATE INDEX idx_change_log_table_record ON audit.change_log(table_name, record_id, changed_at DESC);
+CREATE INDEX idx_change_log_table_record ON audit.change_log (
+    table_name, record_id, changed_at DESC
+);
 
 -- Composite index for "show me all changes by this user"
-CREATE INDEX idx_change_log_user_time ON audit.change_log(user_id, changed_at DESC);
+CREATE INDEX idx_change_log_user_time ON audit.change_log (
+    user_id, changed_at DESC
+);
 
 -- Add table and column comments
 COMMENT ON TABLE audit.change_log IS 'Audit trail of all data changes in the system';

@@ -12,22 +12,29 @@ CREATE SEQUENCE audit.action_log_id_seq;
 -- Create partitioned table
 CREATE TABLE audit.action_log (
     id BIGINT NOT NULL DEFAULT nextval('audit.action_log_id_seq'),
-    action_type VARCHAR(50) NOT NULL,  -- 'login', 'logout', 'download', 'upload', 'delete', etc.
-    resource_type VARCHAR(50),          -- 'file', 'user', NULL for non-resource actions
-    resource_id BIGINT,                 -- Reference to resource (file_id, user_id, etc.)
-    user_id BIGINT,                     -- NULL for anonymous actions (public downloads)
+    -- 'login', 'logout', 'download', 'upload', 'delete', etc.
+    action_type VARCHAR(50) NOT NULL,
+    -- 'file', 'user', NULL for non-resource actions
+    resource_type VARCHAR(50),
+    -- Reference to resource (file_id, user_id, etc.)
+    resource_id BIGINT,
+    -- NULL for anonymous actions (public downloads)
+    user_id BIGINT,
     ip_address VARCHAR(45),             -- IPv4 or IPv6 address
     user_agent TEXT,                    -- Browser/client user agent
-    metadata JSONB,                     -- Flexible field for action-specific data
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Flexible field for action-specific data
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
     PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 -- Create indexes on partitioned table
-CREATE INDEX idx_action_log_type ON audit.action_log(action_type);
-CREATE INDEX idx_action_log_resource ON audit.action_log(resource_type, resource_id);
-CREATE INDEX idx_action_log_user ON audit.action_log(user_id);
-CREATE INDEX idx_action_log_created ON audit.action_log(created_at DESC);
+CREATE INDEX idx_action_log_type ON audit.action_log (action_type);
+CREATE INDEX idx_action_log_resource ON audit.action_log (
+    resource_type, resource_id
+);
+CREATE INDEX idx_action_log_user ON audit.action_log (user_id);
+CREATE INDEX idx_action_log_created ON audit.action_log (created_at DESC);
 
 -- Add table and column comments
 COMMENT ON TABLE audit.action_log IS 'Partitioned table logging all user actions. Partitioned by month with automatic partition creation and 12-month retention.';
@@ -55,12 +62,13 @@ SELECT partman.create_parent(
     p_control := 'created_at',
     p_interval := '1 month',
     p_premake := 1,
-    p_start_partition := to_char(CURRENT_DATE, 'YYYY-MM-01')
+    p_start_partition := to_char(current_date, 'YYYY-MM-01')
 );
 
 -- Configure retention policy (drop partitions older than 12 months)
 UPDATE partman.part_config
-SET retention = '12 months',
+SET
+    retention = '12 months',
     retention_keep_table = false,  -- Drop old partitions completely
     retention_keep_index = false,
     infinite_time_partitions = true
