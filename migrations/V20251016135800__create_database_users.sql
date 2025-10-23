@@ -7,7 +7,10 @@
 -- =============================================================================
 -- Ensure portfolio_owner has all necessary privileges (already granted in init script)
 -- Note: Database-level grants use current_database() to work with any database name
-EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO portfolio_owner', current_database());
+DO $$
+BEGIN
+    EXECUTE format('GRANT ALL PRIVILEGES ON DATABASE %I TO portfolio_owner', current_database());
+END $$;
 GRANT ALL PRIVILEGES ON SCHEMA public TO portfolio_owner;
 
 
@@ -15,14 +18,20 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO portfolio_owner;
 -- 2. ADMIN USER (for admin services - CRUD access)
 -- =============================================================================
 -- Basic permissions - detailed schema permissions granted in V20251016135900
-EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_admin', current_database());
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_admin', current_database());
+END $$;
 
 
 -- =============================================================================
 -- 3. PUBLIC USER (for public API - read-only access)
 -- =============================================================================
 -- Basic permissions - detailed schema permissions granted in V20251016135900
-EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_public', current_database());
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO portfolio_public', current_database());
+END $$;
 
 
 -- =============================================================================
