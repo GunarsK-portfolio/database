@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  # Job 1: Validate YAML files
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: YAML Lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+          config_file: .yamllint.yml
+          strict: true
+        continue-on-error: true
+
+  # Job 2: Validate Docker Compose
+  docker-compose-validate:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Validate docker-compose.yml syntax
+        run: docker compose config --quiet --no-interpolate
+
+  # Job 3: Test Flyway migrations against real PostgreSQL
+  flyway-migration-test:
+    name: Flyway Migration Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: ${{ secrets.CI_DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.CI_DB_NAME }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Check migration file naming
+        run: |
+          echo "Checking Flyway migration file naming..."
+          for file in migrations/*.sql; do
+            if [[ ! $(basename "$file") =~ ^V[0-9]{14}__[a-z0-9_]+\.sql$ ]]; then
+              echo "ERROR: Invalid migration file name: $(basename "$file")"
+              echo "Expected format: V{timestamp}__description.sql (e.g., V20251016135800__create_users_table.sql)"
+              exit 1
+            fi
+          done
+          echo "All migration files follow correct naming convention"
+
+      - name: Check migration ordering
+        run: |
+          echo "Checking migration file ordering..."
+          prev=""
+          for file in migrations/V*.sql; do
+            current=$(basename "$file" | cut -d'_' -f1 | sed 's/V//')
+            if [[ -n "$prev" && "$current" < "$prev" ]]; then
+              echo "ERROR: Migrations are not in chronological order"
+              echo "Found $current after $prev"
+              exit 1
+            fi
+            prev="$current"
+          done
+          echo "Migration files are in correct chronological order"
+
+      - name: Run Flyway migrations
+        run: |
+          docker run --rm \
+            --network host \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:11 \
+            -url=jdbc:postgresql://localhost:5432/${{ secrets.CI_DB_NAME }} \
+            -user=${{ secrets.CI_DB_USER }} \
+            -password=${{ secrets.CI_DB_PASSWORD }} \
+            -connectRetries=5 \
+            migrate
+
+      - name: Verify migrations applied successfully
+        run: |
+          docker run --rm \
+            --network host \
+            flyway/flyway:11 \
+            -url=jdbc:postgresql://localhost:5432/${{ secrets.CI_DB_NAME }} \
+            -user=${{ secrets.CI_DB_USER }} \
+            -password=${{ secrets.CI_DB_PASSWORD }} \
+            info
+
+  # Job 4: SQL Linting
+  sql-lint:
+    name: SQL Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff
+
+      - name: Lint SQL files
+        run: |
+          sqlfluff lint migrations/ --dialect postgres || true
+        continue-on-error: true
+
+  # Job 5: Security - Check for secrets
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          extra_args: --only-verified
+
+  # Job 6: Markdown lint
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Lint Markdown files
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: '**/*.md'
+        continue-on-error: true
+
+  # Summary job - require all to pass
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [yaml-lint, docker-compose-validate, flyway-migration-test, sql-lint, secret-scan, markdown-lint]
+    if: always()
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more CI jobs failed"
+            exit 1
+          fi
+          echo "All CI jobs passed successfully!"

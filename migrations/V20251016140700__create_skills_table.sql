@@ -11,17 +11,17 @@ CREATE TABLE portfolio.skills (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_skill UNIQUE (skill),
     CONSTRAINT fk_skill_type FOREIGN KEY (skill_type_id)
-        REFERENCES portfolio.cl_skill_types(id) ON DELETE RESTRICT
+    REFERENCES portfolio.cl_skill_types (id) ON DELETE RESTRICT
 );
 
 -- Create index on skill_type_id for filtering by category
-CREATE INDEX idx_skills_type_id ON portfolio.skills(skill_type_id);
+CREATE INDEX idx_skills_type_id ON portfolio.skills (skill_type_id);
 
 -- Create index on is_visible for filtering visible skills
-CREATE INDEX idx_skills_is_visible ON portfolio.skills(is_visible);
+CREATE INDEX idx_skills_is_visible ON portfolio.skills (is_visible);
 
 -- Create index on display_order for sorting
-CREATE INDEX idx_skills_display_order ON portfolio.skills(display_order);
+CREATE INDEX idx_skills_display_order ON portfolio.skills (display_order);
 
 -- Create trigger to automatically update updated_at
 CREATE TRIGGER update_skills_updated_at BEFORE UPDATE ON portfolio.skills FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
