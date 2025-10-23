@@ -96,20 +96,40 @@ jobs:
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -f /scripts/init-users.sql
 
-      - name: Install and initialize PostgreSQL extensions
+      - name: Initialize PostgreSQL extensions
         run: |
-          # Install pg_cron extension in the postgres service container
-          docker exec $(docker ps -qf "ancestor=postgres:18") bash -c "
-            apt-get update &&
-            apt-get install -y postgresql-18-cron
-          "
-          # Create extensions
+          # Create pg_stat_statements (pg_cron is skipped in CI as it requires server restart with shared_preload_libraries)
           docker run --rm \
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             postgres:18 \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
-            -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements; CREATE EXTENSION IF NOT EXISTS pg_cron;"
+            -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+
+      - name: Create stub pg_cron for CI
+        run: |
+          # Create stub cron schema and functions (pg_cron extension unavailable in CI)
+          docker run --rm \
+            --network host \
+            -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
+            postgres:18 \
+            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} << 'EOF'
+          CREATE SCHEMA IF NOT EXISTS cron;
+          CREATE TABLE IF NOT EXISTS cron.job (
+            jobid bigserial primary key,
+            schedule text,
+            command text,
+            nodename text,
+            nodeport int,
+            database text,
+            username text,
+            active boolean
+          );
+          CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text)
+          RETURNS bigint AS $$ SELECT 1::bigint; $$ LANGUAGE SQL;
+          GRANT USAGE ON SCHEMA cron TO portfolio_owner;
+          GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;
+          EOF
 
       - name: Run Flyway migrations
         run: |
