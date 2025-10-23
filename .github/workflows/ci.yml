@@ -42,7 +42,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18
+        image: postgres:18-alpine
         env:
           POSTGRES_USER: ${{ secrets.CI_DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
@@ -92,43 +92,53 @@ jobs:
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
             -v ${{ github.workspace }}/docker/postgres:/scripts \
-            postgres:18 \
+            postgres:18-alpine \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -f /scripts/init-users.sql
 
       - name: Initialize PostgreSQL extensions
         run: |
-          # Create pg_stat_statements (pg_cron is skipped in CI as it requires server restart with shared_preload_libraries)
+          # Create pg_stat_statements (available in alpine image)
           docker run --rm \
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
-            postgres:18 \
+            postgres:18-alpine \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
             -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
 
-      - name: Create stub pg_cron for CI
+      - name: Create stubs for pg_cron and pg_partman (CI only)
         run: |
-          # Create stub cron schema and functions (pg_cron extension unavailable in CI)
+          # Create stub schemas and functions for extensions unavailable in CI
           docker run --rm \
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
-            postgres:18 \
+            postgres:18-alpine \
             psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} << 'EOF'
+          -- Stub pg_cron
           CREATE SCHEMA IF NOT EXISTS cron;
           CREATE TABLE IF NOT EXISTS cron.job (
-            jobid bigserial primary key,
-            schedule text,
-            command text,
-            nodename text,
-            nodeport int,
-            database text,
-            username text,
-            active boolean
+            jobid bigserial primary key, schedule text, command text,
+            nodename text, nodeport int, database text, username text, active boolean
           );
           CREATE OR REPLACE FUNCTION cron.schedule(job_name text, schedule text, command text)
           RETURNS bigint AS $$ SELECT 1::bigint; $$ LANGUAGE SQL;
           GRANT USAGE ON SCHEMA cron TO portfolio_owner;
           GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;
+
+          -- Stub pg_partman
+          CREATE SCHEMA IF NOT EXISTS partman;
+          CREATE TABLE IF NOT EXISTS partman.part_config (
+            parent_table text primary key, control text, partition_interval text,
+            premake int, retention text, retention_keep_table boolean, retention_keep_index boolean
+          );
+          CREATE OR REPLACE FUNCTION partman.create_parent(
+            p_parent_table text, p_control text, p_interval text,
+            p_premake int DEFAULT 4, p_start_partition text DEFAULT NULL
+          ) RETURNS boolean AS $$ SELECT true; $$ LANGUAGE SQL;
+          CREATE OR REPLACE FUNCTION partman.run_maintenance()
+          RETURNS void AS $$ SELECT; $$ LANGUAGE SQL;
+          GRANT USAGE ON SCHEMA partman TO portfolio_owner;
+          GRANT ALL ON ALL TABLES IN SCHEMA partman TO portfolio_owner;
           EOF
 
       - name: Run Flyway migrations
