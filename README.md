@@ -251,6 +251,7 @@ docker-compose run --rm flyway repair
 This project uses [Task](https://taskfile.dev) for development commands:
 
 ```bash
+
 # Database operations
 task db:up            # Start PostgreSQL database with Docker Compose
 task db:down          # Stop database
@@ -265,8 +266,10 @@ task ci:all               # Run all CI checks (validate, lint, check migrations)
 task ci:validate          # Validate docker-compose configuration
 task ci:lint-yaml         # Lint YAML files with yamllint
 task ci:lint-sql          # Lint SQL migration files with sqlfluff
+task ci:lint-markdown     # Lint Markdown files with markdownlint-cli2
 task ci:check-migrations  # Validate migration file naming and ordering
-task dev:install-tools    # Install CI/CD tools (yamllint, sqlfluff, markdownlint-cli2)
+task ci:install-tools     # Install CI/CD tools (yamllint, sqlfluff, markdownlint-cli2)
+
 ```
 
 ## License

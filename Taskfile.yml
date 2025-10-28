@@ -46,6 +46,7 @@ tasks:
       - task: ci:validate
       - task: ci:lint-yaml
       - task: ci:lint-sql
+      - task: ci:lint-markdown
       - task: ci:check-migrations
       - echo "✓ All CI checks passed!"
 
@@ -93,8 +94,5 @@ tasks:
   ci:install-tools:
     desc: Install CI/CD tools (requires pip and npm)
     cmds:
-      - cmd: python -m pip install yamllint sqlfluff
-        platforms: [windows]
-      - cmd: pip install yamllint sqlfluff
-        platforms: [linux, darwin]
+      - python -m pip install yamllint sqlfluff
       - npm install -g markdownlint-cli2
