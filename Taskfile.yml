@@ -1,49 +1,60 @@
 version: '3'
 
 tasks:
-  up:
+  # Database operations
+  db:up:
     desc: Start PostgreSQL database with Docker Compose
     cmds:
       - docker compose up -d
 
-  down:
+  db:down:
     desc: Stop PostgreSQL database
     cmds:
       - docker compose down
 
-  logs:
+  db:logs:
     desc: View database logs
     cmds:
       - docker compose logs -f postgres
 
-  migrate:
+  db:clean:
+    desc: Remove database and volumes
+    cmds:
+      - docker compose down -v
+
+  db:console:
+    desc: Connect to database with psql
+    cmds:
+      - docker compose exec postgres psql -U portfolio_owner -d portfolio
+
+  # Migration operations
+  db:migrate:
     desc: Run Flyway migrations
     cmds:
       - docker compose up -d postgres
       - docker compose run --rm flyway migrate
 
-  validate-migrations:
+  db:validate:
     desc: Validate Flyway migrations
     cmds:
       - docker compose run --rm flyway validate
 
-  clean:
-    desc: Remove database and volumes
+  # CI/CD tasks
+  ci:all:
+    desc: Run all CI checks (validate, lint, check migrations)
     cmds:
-      - docker compose down -v
+      - task: ci:validate
+      - task: ci:lint-yaml
+      - task: ci:lint-sql
+      - task: ci:check-migrations
+      - echo "✓ All CI checks passed!"
 
-  psql:
-    desc: Connect to database with psql
-    cmds:
-      - docker compose exec postgres psql -U portfolio_owner -d portfolio
-
-  # CI/CD Tasks
-  validate:
+  ci:validate:
     desc: Validate docker compose configuration syntax
     cmds:
       - docker compose config --quiet --no-interpolate
 
-  lint-yaml:
+  ci:lint-yaml:
     desc: Lint YAML files
     cmds:
       - cmd: python -m yamllint .
@@ -51,7 +62,7 @@ tasks:
       - cmd: yamllint .
         platforms: [linux, darwin]
 
-  lint-sql:
+  ci:lint-sql:
     desc: Lint SQL migration files
     cmds:
       - cmd: python -m sqlfluff lint migrations/ --dialect postgres
@@ -59,13 +70,13 @@ tasks:
       - cmd: sqlfluff lint migrations/ --dialect postgres
         platforms: [linux, darwin]
 
-  lint-markdown:
+  ci:lint-markdown:
     desc: Lint Markdown files
     cmds:
       - markdownlint-cli2 "**/*.md"
 
-  check-migrations:
-    desc: Validate migration file naming (checked in CI)
+  ci:check-migrations:
+    desc: Validate migration file naming convention
     cmds:
       - cmd: echo "Migration validation runs in CI pipeline"
         platforms: [windows]
@@ -79,20 +90,11 @@ tasks:
           echo "All migration files follow correct naming convention"
         platforms: [linux, darwin]
 
-  install-tools:
+  ci:install-tools:
     desc: Install CI/CD tools (requires pip and npm)
     cmds:
-      - cmd: pip install yamllint sqlfluff
-        platforms: [linux, darwin]
       - cmd: python -m pip install yamllint sqlfluff
         platforms: [windows]
+      - cmd: pip install yamllint sqlfluff
+        platforms: [linux, darwin]
       - npm install -g markdownlint-cli2
-
-  ci:
-    desc: Run all CI checks locally
-    cmds:
-      - task: validate
-      - task: lint-yaml
-      - task: check-migrations
-      - task: lint-sql
-      - echo "✓ All CI checks passed!"
