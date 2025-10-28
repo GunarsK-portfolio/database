@@ -48,7 +48,7 @@ tasks:
       - task: ci:lint-sql
       - task: ci:lint-markdown
       - task: ci:check-migrations
-      - echo "✓ All CI checks passed!"
+      - echo "All CI checks passed!"
 
   ci:validate:
     desc: Validate docker compose configuration syntax
@@ -74,7 +74,7 @@ tasks:
   ci:lint-markdown:
     desc: Lint Markdown files
     cmds:
-      - markdownlint-cli2 "**/*.md"
+      - markdownlint-cli2
 
   ci:check-migrations:
     desc: Validate migration file naming convention

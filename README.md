@@ -7,13 +7,15 @@ PostgreSQL database schema with Flyway migrations for the portfolio project.
 ## Overview
 
 This repository contains:
+
 - Database schema migrations (Flyway versioned)
 - Seed data for development
 - Database setup scripts
 - Audit logging for data changes
 - Query performance monitoring (optional)
 
-📖 **[Full Schema Documentation](docs/SCHEMA.md)** - Detailed table definitions, relationships, and column descriptions
+📖 **[Full Schema Documentation](docs/SCHEMA.md)** - Detailed table
+definitions, relationships, and column descriptions
 
 ## Tech Stack
 
@@ -28,8 +30,8 @@ This repository contains:
 | Schema | Purpose | Tables |
 |--------|---------|--------|
 | `auth` | Authentication | users |
-| `portfolio` | Professional portfolio | profile, work_experience, certifications, portfolio_projects, skills, project_technologies, cl_skill_types |
-| `miniatures` | Miniature painting | miniature_themes, miniature_projects, miniature_techniques, miniature_paints, miniature_files, cl_techniques, cl_paints |
+| `portfolio` | Professional portfolio | profile, work_experience, certifications, projects, skills |
+| `miniatures` | Miniature painting | themes, projects, techniques, paints, files |
 | `storage` | File storage (S3) | files |
 | `audit` | Change tracking | change_log, query_stats (view) |
 
@@ -72,12 +74,14 @@ docker-compose run --rm flyway migrate
 **23 versioned migrations** + **5 seed files** = Complete database setup
 
 Includes:
+
 - Database users and schemas
 - Core tables (users, profile, work experience, certifications, projects, skills)
 - Miniature painting tables (themes, projects, techniques, paints, files)
 - Audit logging with automatic triggers
 - Query performance monitoring setup
-- Seed data: admin user, 120+ paints, 20 techniques, skill types, sample portfolio data
+- Seed data: admin user, 120+ paints, 20 techniques, skill types,
+  sample portfolio data
 
 ## Features
 
@@ -86,6 +90,7 @@ Includes:
 All data changes (INSERT/UPDATE/DELETE) are automatically tracked in `audit.change_log`.
 
 **View audit trail:**
+
 ```sql
 SELECT * FROM audit.change_log
 WHERE table_name = 'portfolio_projects'
@@ -98,6 +103,7 @@ ORDER BY changed_at DESC;
 Track query execution times with `pg_stat_statements`.
 
 **View slow queries:**
+
 ```sql
 SELECT * FROM audit.query_stats
 WHERE mean_exec_time > 100
@@ -132,12 +138,14 @@ docker exec -it postgres psql -U portfolio_owner -d portfolio
 ## Creating New Migrations
 
 1. Create file with timestamp:
+
 ```bash
 # Format: V{YYYYMMDDHHMMSS}__{description}.sql
 touch migrations/V20251016150000__add_new_table.sql
 ```
 
-2. Write SQL:
+1. Write SQL:
+
 ```sql
 CREATE TABLE portfolio.new_table (
     id BIGSERIAL PRIMARY KEY,
@@ -151,7 +159,8 @@ CREATE TRIGGER audit_new_table
     FOR EACH ROW EXECUTE FUNCTION audit.log_change();
 ```
 
-3. Apply migration:
+1. Apply migration:
+
 ```bash
 docker-compose run --rm flyway migrate
 ```
@@ -170,11 +179,13 @@ This database is used by:
 ## Backup and Restore
 
 ### Backup
+
 ```bash
 docker exec postgres pg_dump -U portfolio_owner portfolio > backup_$(date +%Y%m%d).sql
 ```
 
 ### Restore
+
 ```bash
 docker exec -i postgres psql -U portfolio_owner portfolio < backup_20251016.sql
 ```
@@ -182,16 +193,19 @@ docker exec -i postgres psql -U portfolio_owner portfolio < backup_20251016.sql
 ## Troubleshooting
 
 ### Check migration status
+
 ```bash
 docker-compose run --rm flyway info
 ```
 
 ### View Flyway logs
+
 ```bash
 docker logs flyway
 ```
 
 ### Reset database (⚠️ destroys all data)
+
 ```bash
 # From infrastructure directory
 docker-compose down -v
@@ -200,6 +214,7 @@ docker-compose run --rm flyway migrate
 ```
 
 ### Check database size
+
 ```sql
 SELECT
     schemaname,
@@ -215,16 +230,19 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Local setup
 
 1. Start PostgreSQL:
+
 ```bash
 docker-compose up -d postgres
 ```
 
-2. Run migrations:
+1. Run migrations:
+
 ```bash
 docker-compose run --rm flyway migrate
 ```
 
-3. Connect with your favorite client:
+1. Connect with your favorite client:
+
 - DBeaver
 - pgAdmin
 - psql
