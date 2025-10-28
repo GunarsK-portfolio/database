@@ -25,6 +25,7 @@ PostgreSQL 18 database with 5 schemas, 18 tables, and 3-tier user security model
 ### auth schema
 
 #### users
+
 Authentication users for admin portal access.
 
 | Column | Type | Constraints | Description |
@@ -37,10 +38,12 @@ Authentication users for admin portal access.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when user was last updated |
 
 **Indexes:**
+
 - `idx_users_username` on username
 - `idx_users_email` on email
 
 **Triggers:**
+
 - `update_users_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
@@ -48,6 +51,7 @@ Authentication users for admin portal access.
 ### storage schema
 
 #### files
+
 Generic S3 file storage for images, PDFs, documents, and other files.
 
 | Column | Type | Constraints | Description |
@@ -62,6 +66,7 @@ Generic S3 file storage for images, PDFs, documents, and other files.
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when file was uploaded |
 
 **Indexes:**
+
 - `idx_files_s3_key` on s3_key
 - `idx_files_file_type` on file_type
 
@@ -70,6 +75,7 @@ Generic S3 file storage for images, PDFs, documents, and other files.
 ### portfolio schema
 
 #### profile
+
 Portfolio owner profile information (singleton table, should have exactly 1 row).
 
 | Column | Type | Constraints | Description |
@@ -87,15 +93,18 @@ Portfolio owner profile information (singleton table, should have exactly 1 row)
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when profile was last updated |
 
 **Foreign Keys:**
+
 - `avatar_file_id` → `storage.files(id)` ON DELETE SET NULL
 - `resume_file_id` → `storage.files(id)` ON DELETE SET NULL
 
 **Triggers:**
+
 - `update_profile_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### work_experience
+
 Work experience history for portfolio owner.
 
 | Column | Type | Constraints | Description |
@@ -111,14 +120,17 @@ Work experience history for portfolio owner.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when record was last updated |
 
 **Indexes:**
+
 - `idx_work_experience_start_date` on start_date DESC
 
 **Triggers:**
+
 - `update_work_experience_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### certifications
+
 Professional certifications and credentials.
 
 | Column | Type | Constraints | Description |
@@ -134,15 +146,18 @@ Professional certifications and credentials.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when record was last updated |
 
 **Indexes:**
+
 - `idx_certifications_issue_date` on issue_date DESC
 - `idx_certifications_credential_id` on credential_id
 
 **Triggers:**
+
 - `update_certifications_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### portfolio_projects
+
 Professional software development portfolio projects.
 
 | Column | Type | Constraints | Description |
@@ -169,19 +184,23 @@ Professional software development portfolio projects.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when project was last updated |
 
 **Foreign Keys:**
+
 - `image_file_id` → `storage.files(id)` ON DELETE SET NULL
 
 **Indexes:**
+
 - `idx_portfolio_projects_display_order` on display_order
 - `idx_portfolio_projects_category` on category
 - `idx_portfolio_projects_featured` on featured
 
 **Triggers:**
+
 - `update_portfolio_projects_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### cl_skill_types
+
 Skill categories classifier (e.g., Frontend, Backend, Database, DevOps).
 
 | Column | Type | Constraints | Description |
@@ -194,15 +213,18 @@ Skill categories classifier (e.g., Frontend, Backend, Database, DevOps).
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when skill type was last updated |
 
 **Indexes:**
+
 - `idx_skill_types_display_order` on display_order
 - `idx_skill_types_name` on name
 
 **Triggers:**
+
 - `update_skill_types_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### skills
+
 Individual skills and technologies.
 
 | Column | Type | Constraints | Description |
@@ -216,19 +238,23 @@ Individual skills and technologies.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when skill was last updated |
 
 **Foreign Keys:**
+
 - `skill_type_id` → `portfolio.cl_skill_types(id)` ON DELETE RESTRICT
 
 **Indexes:**
+
 - `idx_skills_type_id` on skill_type_id
 - `idx_skills_is_visible` on is_visible
 - `idx_skills_display_order` on display_order
 
 **Triggers:**
+
 - `update_skills_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### project_technologies
+
 Junction table linking portfolio projects to skills/technologies (many-to-many).
 
 | Column | Type | Constraints | Description |
@@ -239,13 +265,16 @@ Junction table linking portfolio projects to skills/technologies (many-to-many).
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when link was created |
 
 **Foreign Keys:**
+
 - `project_id` → `portfolio.portfolio_projects(id)` ON DELETE CASCADE
 - `skill_id` → `portfolio.skills(id)` ON DELETE CASCADE
 
 **Unique Constraints:**
+
 - `(project_id, skill_id)` - One skill per project
 
 **Indexes:**
+
 - `idx_project_technologies_project_id` on project_id
 - `idx_project_technologies_skill_id` on skill_id
 
@@ -254,6 +283,7 @@ Junction table linking portfolio projects to skills/technologies (many-to-many).
 ### miniatures schema
 
 #### miniature_themes
+
 Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 40k).
 
 | Column | Type | Constraints | Description |
@@ -267,18 +297,22 @@ Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when theme was last updated |
 
 **Foreign Keys:**
+
 - `cover_image_id` → `storage.files(id)` ON DELETE SET NULL
 
 **Indexes:**
+
 - `idx_miniature_themes_display_order` on display_order
 - `idx_miniature_themes_cover_image_id` on cover_image_id
 
 **Triggers:**
+
 - `update_miniature_themes_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### miniature_projects
+
 Individual miniature painting projects.
 
 | Column | Type | Constraints | Description |
@@ -297,20 +331,24 @@ Individual miniature painting projects.
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when project was last updated |
 
 **Foreign Keys:**
+
 - `theme_id` → `miniatures.miniature_themes(id)` ON DELETE SET NULL
 
 **Indexes:**
+
 - `idx_miniature_projects_display_order` on display_order
 - `idx_miniature_projects_theme_id` on theme_id
 - `idx_miniature_projects_difficulty` on difficulty
 - `idx_miniature_projects_manufacturer` on manufacturer
 
 **Triggers:**
+
 - `update_miniature_projects_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### cl_techniques
+
 Master list of miniature painting techniques (classifier).
 
 | Column | Type | Constraints | Description |
@@ -324,16 +362,19 @@ Master list of miniature painting techniques (classifier).
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when technique was last updated |
 
 **Indexes:**
+
 - `idx_techniques_name` on name
 - `idx_techniques_difficulty` on difficulty_level
 - `idx_techniques_display_order` on display_order
 
 **Triggers:**
+
 - `update_techniques_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### cl_paints
+
 Master list of miniature paints (classifier).
 
 | Column | Type | Constraints | Description |
@@ -348,19 +389,23 @@ Master list of miniature paints (classifier).
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when paint was last updated |
 
 **Unique Constraints:**
+
 - `(name, manufacturer)` - Unique paint per manufacturer
 
 **Indexes:**
+
 - `idx_paints_manufacturer` on manufacturer
 - `idx_paints_paint_type` on paint_type
 - `idx_paints_name` on name
 
 **Triggers:**
+
 - `update_paints_updated_at` - Auto-updates updated_at on UPDATE
 
 ---
 
 #### miniature_techniques
+
 Junction table linking miniature projects to painting techniques (many-to-many).
 
 | Column | Type | Constraints | Description |
@@ -372,19 +417,23 @@ Junction table linking miniature projects to painting techniques (many-to-many).
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when link was created |
 
 **Foreign Keys:**
+
 - `miniature_project_id` → `miniatures.miniature_projects(id)` ON DELETE CASCADE
 - `technique_id` → `miniatures.cl_techniques(id)` ON DELETE CASCADE
 
 **Unique Constraints:**
+
 - `(miniature_project_id, technique_id)` - One technique per project
 
 **Indexes:**
+
 - `idx_miniature_techniques_miniature_id` on miniature_project_id
 - `idx_miniature_techniques_technique_id` on technique_id
 
 ---
 
 #### miniature_paints
+
 Junction table linking miniature projects to paints (many-to-many).
 
 | Column | Type | Constraints | Description |
@@ -396,19 +445,23 @@ Junction table linking miniature projects to paints (many-to-many).
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when link was created |
 
 **Foreign Keys:**
+
 - `miniature_project_id` → `miniatures.miniature_projects(id)` ON DELETE CASCADE
 - `paint_id` → `miniatures.cl_paints(id)` ON DELETE CASCADE
 
 **Unique Constraints:**
+
 - `(miniature_project_id, paint_id)` - One paint per project
 
 **Indexes:**
+
 - `idx_miniature_paints_miniature_id` on miniature_project_id
 - `idx_miniature_paints_paint_id` on paint_id
 
 ---
 
 #### miniature_files
+
 Junction table linking miniature projects to images (many-to-many).
 
 | Column | Type | Constraints | Description |
@@ -421,13 +474,16 @@ Junction table linking miniature projects to images (many-to-many).
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when link was created |
 
 **Foreign Keys:**
+
 - `miniature_project_id` → `miniatures.miniature_projects(id)` ON DELETE CASCADE
 - `file_id` → `storage.files(id)` ON DELETE CASCADE
 
 **Unique Constraints:**
+
 - `(miniature_project_id, file_id)` - One file per project
 
 **Indexes:**
+
 - `idx_miniature_files_miniature_id` on miniature_project_id
 - `idx_miniature_files_file_id` on file_id
 - `idx_miniature_files_display_order` on (miniature_project_id, display_order)
@@ -437,6 +493,7 @@ Junction table linking miniature projects to images (many-to-many).
 ### audit schema
 
 #### change_log
+
 Audit trail of all data changes in the system.
 
 | Column | Type | Constraints | Description |
@@ -456,6 +513,7 @@ Audit trail of all data changes in the system.
 | user_agent | TEXT | | Optional: client user agent for additional context |
 
 **Indexes:**
+
 - `idx_change_log_table_name` on table_name
 - `idx_change_log_record_id` on record_id
 - `idx_change_log_user_id` on user_id
@@ -466,6 +524,7 @@ Audit trail of all data changes in the system.
 
 **Usage:**
 Set user context before DML operations:
+
 ```sql
 BEGIN;
 SELECT set_config('app.current_user_id', '42', true);
@@ -479,6 +538,7 @@ COMMIT;
 ## Relationships
 
 ### Portfolio Domain
+
 - `profile.avatar_file_id` → `storage.files` (1:1)
 - `profile.resume_file_id` → `storage.files` (1:1)
 - `portfolio_projects.image_file_id` → `storage.files` (1:1)
@@ -486,6 +546,7 @@ COMMIT;
 - `portfolio_projects` ←→ `skills` via `project_technologies` (M:N)
 
 ### Miniatures Domain
+
 - `miniature_themes.cover_image_id` → `storage.files` (1:1)
 - `miniature_projects.theme_id` → `miniature_themes` (N:1)
 - `miniature_projects` ←→ `cl_techniques` via `miniature_techniques` (M:N)
@@ -495,17 +556,20 @@ COMMIT;
 ## Features
 
 ### Audit Logging
+
 - Automatic change tracking via triggers on 13 critical tables
 - Captures user context (user_id, username, client_ip)
 - JSONB snapshots of before/after data
 - Changed fields tracking for UPDATEs
 
 ### Query Performance Monitoring
+
 - `pg_stat_statements` extension enabled
 - `audit.query_stats` view for easy analysis
 - Tracks execution time, call counts, and slow queries
 
 ### Automatic Timestamps
+
 - `updated_at` columns auto-update via triggers
 - Reusable `public.update_updated_at_column()` function
 

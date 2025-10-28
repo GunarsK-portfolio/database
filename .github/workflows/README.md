@@ -5,6 +5,7 @@
 ### CI Pipeline (`ci.yml`)
 
 Comprehensive continuous integration pipeline that runs on:
+
 - Pull requests to `main` or `develop`
 - Pushes to `main` or `develop`
 - Manual workflow dispatch
@@ -22,6 +23,7 @@ Comprehensive continuous integration pipeline that runs on:
 6. **Markdown Lint** - Validate Markdown documentation
 
 **Security Features:**
+
 - Secret scanning to prevent credential leaks
 - Actual migration execution against test database
 - SQL linting to maintain code quality
@@ -50,6 +52,7 @@ Add these to your README.md:
 ## Local Testing
 
 Using Task:
+
 ```bash
 task validate          # Validate docker-compose.yml
 task lint-yaml         # Lint YAML files
@@ -69,6 +72,7 @@ task install-tools     # Install required linting tools
 ## Notes for Database Repository
 
 This repository contains database schema and migrations:
+
 - Flyway migrations must follow naming convention: `V{timestamp}__{description}.sql`
 - Migrations must be in chronological order
 - SQL code is linted for quality and consistency
