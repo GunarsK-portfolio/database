@@ -1,0 +1,22 @@
+language: en-US
+early_access: false
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  docstring:
+    enabled: false
+  tools:
+    sqlfluff:
+      enabled: true
+    yamllint:
+      enabled: true
+chat:
+  auto_reply: true
+tone_instructions: "Focus on migration safety, schema design, indexing, seed idempotency, and data integrity. Flag migrations that could cause data loss. Verify foreign keys and constraints."

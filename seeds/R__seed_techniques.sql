@@ -1,6 +1,7 @@
 -- Seed miniature painting techniques
-INSERT INTO miniatures.cl_techniques (name, description, difficulty_level, display_order)
-VALUES
+
+WITH techniques_data(technique_name, technique_description, difficulty, display_order) AS (
+    VALUES
     ('Basecoating', 'Applying the first layer of paint to establish base colors', 'Beginner', 1),
     ('Drybrushing', 'Technique using a nearly dry brush to highlight raised surfaces', 'Beginner', 2),
     ('Washing', 'Applying thinned paint to flow into recesses for shading', 'Beginner', 3),
@@ -21,6 +22,10 @@ VALUES
     ('Chipping', 'Creating paint damage and wear effects', 'Intermediate', 18),
     ('Pigment Weathering', 'Using dry pigments for dust and weathering effects', 'Intermediate', 19),
     ('Sponge Weathering', 'Using a sponge to create textured weathering effects', 'Beginner', 20)
+)
+INSERT INTO miniatures.cl_techniques (name, description, difficulty_level, display_order)
+SELECT td.technique_name, td.technique_description, td.difficulty, td.display_order
+FROM techniques_data td
 ON CONFLICT (name) DO UPDATE SET
     description = EXCLUDED.description,
     difficulty_level = EXCLUDED.difficulty_level,
