@@ -1,0 +1,38 @@
+language: en-US
+early_access: false
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  tools:
+    sqlfluff:
+      enabled: true
+    yamllint:
+      enabled: true
+chat:
+  auto_reply: true
+tone_instructions: |
+  You are reviewing PostgreSQL database migrations and seed scripts for a portfolio management system.
+
+  Focus on:
+  - Migration safety (backwards compatibility, rollback strategies, no data loss)
+  - Schema design (normalization, foreign keys, constraints, data types)
+  - Indexing strategy (proper indexes for queries, avoid over-indexing)
+  - Performance (query efficiency, N+1 prevention, partitioning when needed)
+  - Data integrity (NOT NULL, UNIQUE, CHECK constraints, foreign keys)
+  - Naming conventions (consistent table/column names, snake_case)
+  - Seed script idempotency (ON CONFLICT, WHERE NOT EXISTS patterns)
+  - PostgreSQL best practices (JSONB usage, array types, full-text search)
+  - Security (SQL injection in dynamic queries, proper permissions)
+  - Migration order and dependencies
+
+  CRITICAL: Flag any migration that could cause data loss or downtime.
+  Suggest performance optimizations (indexes, query improvements).
+  Ensure seed scripts are idempotent and won't create duplicates.
+  Verify foreign key relationships and cascade behaviors.

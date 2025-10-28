@@ -1,9 +1,7 @@
 -- Seed miniature paints
--- Focus on AK Interactive and Army Painter Warband ranges
 
--- AK Interactive 3rd Generation Acrylics
-INSERT INTO miniatures.cl_paints (name, manufacturer, color_hex)
-VALUES
+WITH paints_data(paint_name, manufacturer_name, color_hex) AS (
+    VALUES
     -- AK Interactive Basics
     ('White', 'AK Interactive', '#FFFFFF'),
     ('Black', 'AK Interactive', '#000000'),
@@ -147,6 +145,9 @@ VALUES
     ('Shining Silver', 'Army Painter', '#E8E8E8'),
     ('Gun Metal', 'Army Painter', '#2C3539'),
     ('Rough Iron', 'Army Painter', '#5C5C5C')
-
+)
+INSERT INTO miniatures.cl_paints (name, manufacturer, color_hex)
+SELECT pd.paint_name, pd.manufacturer_name, pd.color_hex
+FROM paints_data pd
 ON CONFLICT (name, manufacturer) DO UPDATE SET
     color_hex = EXCLUDED.color_hex;

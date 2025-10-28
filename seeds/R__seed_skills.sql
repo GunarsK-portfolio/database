@@ -1,278 +1,66 @@
 -- Seed skills based on actual technologies used in the portfolio project
--- This is a repeatable migration (R__) that can be run multiple times
--- Uses ON CONFLICT to prevent duplicates
 
--- ============================================================================
--- FRONTEND SKILLS
--- ============================================================================
+WITH skill_types AS (
+    SELECT id, name FROM portfolio.cl_skill_types
+),
+skills_data(skill_name, type_name, is_visible, display_order) AS (
+    VALUES
+    -- Frontend Skills
+    ('Vue.js', 'Frontend', true, 10),
+    ('Vite', 'Frontend', true, 20),
+    ('Vue Router', 'Frontend', true, 30),
+    ('Pinia', 'Frontend', true, 40),
+    ('Naive UI', 'Frontend', true, 50),
+    ('Axios', 'Frontend', true, 60),
+    ('ESLint', 'Frontend', true, 70),
+    ('Prettier', 'Frontend', true, 80),
+    ('Nginx', 'Frontend', true, 90),
 
+    -- Backend Skills
+    ('Go', 'Backend', true, 10),
+    ('Gin', 'Backend', true, 20),
+    ('GORM', 'Backend', true, 30),
+    ('JWT Authentication', 'Backend', true, 40),
+    ('RESTful APIs', 'Backend', true, 50),
+    ('Swagger/OpenAPI', 'Backend', true, 60),
+
+    -- Database Skills
+    ('PostgreSQL', 'Database', true, 10),
+    ('Redis', 'Database', true, 20),
+    ('Flyway', 'Database', true, 30),
+    ('MinIO (S3)', 'Database', true, 40),
+
+    -- DevOps & Tools Skills
+    ('Docker', 'DevOps & Tools', true, 10),
+    ('Docker Compose', 'DevOps & Tools', true, 20),
+    ('Traefik', 'DevOps & Tools', true, 30),
+    ('Prometheus', 'DevOps & Tools', true, 40),
+    ('Grafana', 'DevOps & Tools', true, 50),
+    ('GitHub Actions', 'DevOps & Tools', true, 60),
+    ('Git', 'DevOps & Tools', true, 70),
+    ('VS Code', 'DevOps & Tools', true, 80),
+    ('Linux/Alpine', 'DevOps & Tools', true, 90),
+
+    -- Programming Languages
+    ('JavaScript/TypeScript', 'Languages', true, 10),
+    ('Go (Golang)', 'Languages', true, 20),
+    ('SQL', 'Languages', true, 30),
+    ('YAML', 'Languages', true, 40),
+
+    -- Other Skills
+    ('Microservices Architecture', 'Other', true, 10),
+    ('API Design', 'Other', true, 20),
+    ('Security Best Practices', 'Other', true, 30),
+    ('Code Quality & Testing', 'Other', true, 40)
+)
 INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Vue.js', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Vite', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Vue Router', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Pinia', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Naive UI', id, true, 50 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Axios', id, true, 60 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'ESLint', id, true, 70 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Prettier', id, true, 80 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Nginx', id, true, 90 FROM portfolio.cl_skill_types WHERE name = 'Frontend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
--- ============================================================================
--- BACKEND SKILLS
--- ============================================================================
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Go', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Gin', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'GORM', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'JWT Authentication', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'RESTful APIs', id, true, 50 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Swagger/OpenAPI', id, true, 60 FROM portfolio.cl_skill_types WHERE name = 'Backend'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
--- ============================================================================
--- DATABASE SKILLS
--- ============================================================================
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'PostgreSQL', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'Database'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Redis', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'Database'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Flyway', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'Database'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'MinIO (S3)', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'Database'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
--- ============================================================================
--- DEVOPS & TOOLS SKILLS
--- ============================================================================
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Docker', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Docker Compose', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Traefik', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Prometheus', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Grafana', id, true, 50 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'GitHub Actions', id, true, 60 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Git', id, true, 70 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'VS Code', id, true, 80 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Linux/Alpine', id, true, 90 FROM portfolio.cl_skill_types WHERE name = 'DevOps & Tools'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
--- ============================================================================
--- PROGRAMMING LANGUAGES
--- ============================================================================
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'JavaScript/TypeScript', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'Languages'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Go (Golang)', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'Languages'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'SQL', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'Languages'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'YAML', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'Languages'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
--- ============================================================================
--- OTHER SKILLS
--- ============================================================================
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Microservices Architecture', id, true, 10 FROM portfolio.cl_skill_types WHERE name = 'Other'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'API Design', id, true, 20 FROM portfolio.cl_skill_types WHERE name = 'Other'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Security Best Practices', id, true, 30 FROM portfolio.cl_skill_types WHERE name = 'Other'
-ON CONFLICT (skill) DO UPDATE SET
-    skill_type_id = EXCLUDED.skill_type_id,
-    is_visible = EXCLUDED.is_visible,
-    display_order = EXCLUDED.display_order;
-
-INSERT INTO portfolio.skills (skill, skill_type_id, is_visible, display_order)
-SELECT 'Code Quality & Testing', id, true, 40 FROM portfolio.cl_skill_types WHERE name = 'Other'
+SELECT
+    sd.skill_name,
+    st.id,
+    sd.is_visible,
+    sd.display_order
+FROM skills_data sd
+JOIN skill_types st ON sd.type_name = st.name
 ON CONFLICT (skill) DO UPDATE SET
     skill_type_id = EXCLUDED.skill_type_id,
     is_visible = EXCLUDED.is_visible,
