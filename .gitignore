@@ -1,0 +1,27 @@
+# Environment files
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+
+# Database dumps
+*.sql.gz
+*.dump
+*.dmp
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
