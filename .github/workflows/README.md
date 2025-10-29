@@ -54,12 +54,12 @@ Add these to your README.md:
 Using Task:
 
 ```bash
-task validate          # Validate docker-compose.yml
-task lint-yaml         # Lint YAML files
-task check-migrations  # Validate migration file naming
-task lint-sql          # Lint SQL migration files
-task ci                # Run all CI checks locally
-task install-tools     # Install required linting tools
+task ci:validate           # Validate docker-compose.yml
+task ci:lint-yaml          # Lint YAML files
+task ci:check-migrations   # Validate migration file naming
+task ci:lint-sql           # Lint SQL migration files
+task ci:all                # Run all CI checks
+task dev:install-tools     # Install required linting tools
 ```
 
 ## Configuration Files

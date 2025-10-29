@@ -280,7 +280,7 @@ task db:migrate       # Run Flyway migrations
 task db:validate      # Validate Flyway migrations
 
 # CI/CD checks
-task ci:all               # Run all CI checks (validate, lint, check migrations)
+task ci:all               # Run all CI checks
 task ci:validate          # Validate docker-compose configuration
 task ci:lint-yaml         # Lint YAML files with yamllint
 task ci:lint-sql          # Lint SQL migration files with sqlfluff
