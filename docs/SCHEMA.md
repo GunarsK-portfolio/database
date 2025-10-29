@@ -383,8 +383,7 @@ Master list of miniature paints (classifier).
 | name | VARCHAR(200) | NOT NULL | Paint name (e.g., Abaddon Black, Ushabti Bone) |
 | manufacturer | VARCHAR(100) | NOT NULL | Manufacturer (e.g., AK Interactive, Army Painter) |
 | color_hex | VARCHAR(7) | | Hex color code for display (e.g., #FF5733) |
-| paint_type | VARCHAR(50) | | Type: Acrylic, Enamel, Oil, Wash, Shade, Contrast, etc. |
-| finish | VARCHAR(50) | | Finish: Matte, Satin, Gloss, Metallic |
+| paint_type | VARCHAR(50) | CHECK constraint | Paint type: Base, Layer, Shade, Wash, Contrast, Dry, Technical, Metallic, Air, Primer, Edge, Glaze, Ink |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when paint was created |
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when paint was last updated |
 
@@ -395,8 +394,8 @@ Master list of miniature paints (classifier).
 **Indexes:**
 
 - `idx_paints_manufacturer` on manufacturer
-- `idx_paints_paint_type` on paint_type
 - `idx_paints_name` on name
+- `idx_paints_paint_type` on paint_type
 
 **Triggers:**
 
