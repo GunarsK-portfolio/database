@@ -91,10 +91,16 @@ jobs:
           docker run --rm \
             --network host \
             -e PGPASSWORD=${{ secrets.CI_DB_PASSWORD }} \
+            -e POSTGRES_DB=${{ secrets.CI_DB_NAME }} \
+            -e FLYWAY_USER=portfolio_owner \
+            -e FLYWAY_PASSWORD=portfolio_owner_ci_pass \
+            -e DB_USER=portfolio_admin \
+            -e DB_PASSWORD=portfolio_admin_ci_pass \
+            -e DB_USER_READONLY=portfolio_public \
+            -e DB_PASSWORD_READONLY=portfolio_public_ci_pass \
             -v ${{ github.workspace }}/docker/postgres:/scripts \
             ghcr.io/gunarsk-portfolio/postgres-image:latest \
-            psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }} \
-            -f /scripts/init-users.sql
+            sh -c "envsubst < /scripts/init-users.sql.template | psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }}"
 
       - name: Run Flyway migrations
         run: |
