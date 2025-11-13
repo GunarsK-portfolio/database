@@ -1,0 +1,87 @@
+-- Bootstrap database users for CI testing
+-- Note: This script is processed by envsubst, so env vars work
+-- Extensions (pg_stat_statements, pg_cron, pg_partman) are automatically
+-- created by the postgres-image's /docker-entrypoint-initdb.d/init-extensions.sql
+
+-- OWNER USER (for Flyway migrations - DDL + CRUD access)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${FLYWAY_USER}') THEN
+        CREATE ROLE ${FLYWAY_USER} WITH LOGIN PASSWORD '${FLYWAY_PASSWORD}';
+        RAISE NOTICE 'Created role ${FLYWAY_USER}';
+    ELSE
+        RAISE NOTICE 'Role ${FLYWAY_USER} already exists';
+    END IF;
+END
+$$;
+
+-- Transfer database ownership to ${FLYWAY_USER} (must be done as superuser)
+ALTER DATABASE ${POSTGRES_DB} OWNER TO ${FLYWAY_USER};
+
+-- Grant database connection and creation rights
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${FLYWAY_USER};
+GRANT CREATE ON DATABASE ${POSTGRES_DB} TO ${FLYWAY_USER};
+
+-- Grant all privileges on database
+GRANT ALL PRIVILEGES ON DATABASE ${POSTGRES_DB} TO ${FLYWAY_USER};
+
+-- Grant permissions on public schema (PostgreSQL 15+ requires explicit grants)
+GRANT ALL PRIVILEGES ON SCHEMA public TO ${FLYWAY_USER};
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${FLYWAY_USER};
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${FLYWAY_USER};
+
+-- Set default privileges for future objects
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${FLYWAY_USER};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${FLYWAY_USER};
+
+COMMENT ON ROLE ${FLYWAY_USER} IS 'Flyway migrations user - DDL and CRUD access';
+
+-- ADMIN USER (for admin services - CRUD access)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${DB_USER}') THEN
+        CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASSWORD}';
+        RAISE NOTICE 'Created role ${DB_USER}';
+    ELSE
+        RAISE NOTICE 'Role ${DB_USER} already exists';
+    END IF;
+END
+$$;
+
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${DB_USER};
+COMMENT ON ROLE ${DB_USER} IS 'Admin services user - CRUD only, no DDL';
+
+-- PUBLIC USER (for public API - read-only access)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${DB_USER_READONLY}') THEN
+        CREATE ROLE ${DB_USER_READONLY} WITH LOGIN PASSWORD '${DB_PASSWORD_READONLY}';
+        RAISE NOTICE 'Created role ${DB_USER_READONLY}';
+    ELSE
+        RAISE NOTICE 'Role ${DB_USER_READONLY} already exists';
+    END IF;
+END
+$$;
+
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${DB_USER_READONLY};
+COMMENT ON ROLE ${DB_USER_READONLY} IS 'Public API user - SELECT only';
+
+-- =============================================================================
+-- EXTENSION PERMISSIONS
+-- =============================================================================
+-- Extensions are created by postgres-image's 00-init-extensions.sql
+-- Here we grant necessary permissions to application users
+
+-- Grant pg_cron schema access to portfolio_owner (needed for scheduling jobs in migrations)
+GRANT USAGE ON SCHEMA cron TO portfolio_owner;
+GRANT ALL ON ALL TABLES IN SCHEMA cron TO portfolio_owner;
+
+-- Grant pg_partman schema access to portfolio_owner (needed for partition management)
+-- Transfer ownership of partman schema and all objects to allow partition management
+ALTER SCHEMA partman OWNER TO portfolio_owner;
+GRANT ALL ON SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL TABLES IN SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA partman TO portfolio_owner;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA partman TO portfolio_owner;
+ALTER TABLE partman.part_config OWNER TO portfolio_owner;
+ALTER TABLE partman.part_config_sub OWNER TO portfolio_owner;
