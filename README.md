@@ -271,7 +271,10 @@ docker-compose run --rm flyway repair
 **GitHub Secrets Required:**
 
 - `AWS_ROLE_ARN` - OIDC role ARN for AWS authentication (e.g., `arn:aws:iam::123456789012:role/GitHubActionsRole`)
-- `AWS_REGION` - AWS region (default: `eu-west-1`)
+
+**Configuration:**
+
+- AWS region is set to `eu-west-1` by default in the workflow. Override by setting `AWS_REGION` secret if deploying to a different region.
 
 **AWS Resources Required:**
 
@@ -307,6 +310,36 @@ git push origin v1.0.0
 # - Runs Flyway migrations
 # - Verifies successful application
 ```
+
+### Pre-Deployment Safety Checklist
+
+Before running migrations in production:
+
+1. **Create Aurora Snapshot**
+   ```bash
+   aws rds create-db-cluster-snapshot \
+     --db-cluster-snapshot-identifier portfolio-pre-deploy-$(date +%Y%m%d-%H%M%S) \
+     --db-cluster-identifier portfolio-aurora-cluster \
+     --region eu-west-1
+   ```
+
+2. **Verify Automated Backups Enabled**
+   - Check Aurora cluster has automated backups with retention > 7 days
+   - Confirm backup window doesn't conflict with deployment time
+
+3. **Review Pending Migrations**
+   - Check GitHub Actions workflow logs for pending migration list
+   - Review migration SQL files for destructive operations
+
+4. **Understand Flyway Behavior**
+   - **Idempotency**: Flyway tracks applied migrations in `flyway_schema_history` table, preventing re-application
+   - **No Rollback**: Production does not use Flyway undo scripts; recovery requires restoring from snapshot
+   - **Validation**: Flyway validates migration checksums before applying new migrations
+
+5. **Recovery Plan**
+   - If deployment fails: Review error logs, fix migration, create new tag
+   - If data corruption occurs: Restore from snapshot created in step 1
+   - Expected RTO (Recovery Time Objective): ~15-30 minutes for snapshot restore
 
 **Environment Protection:**
 
