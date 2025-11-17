@@ -1,0 +1,131 @@
+# Database Migration Deployment
+# Runs Flyway migrations against production Aurora database
+
+name: Deploy Database Migrations
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  FLYWAY_VERSION: "11"
+
+jobs:
+  deploy-migrations:
+    name: Deploy Migrations to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get database credentials from Secrets Manager
+        id: db-secrets
+        run: |
+          # Get Aurora endpoint from Secrets Manager
+          DB_HOST=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text | jq -r '.host')
+
+          DB_PORT=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text | jq -r '.port')
+
+          DB_NAME=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text | jq -r '.dbname')
+
+          DB_USER=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text | jq -r '.username')
+
+          DB_PASSWORD=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text | jq -r '.password')
+
+          echo "::add-mask::$DB_PASSWORD"
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
+          echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
+          echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Verify database connectivity
+        run: |
+          docker run --rm \
+            --network host \
+            postgres:16-alpine \
+            psql \
+            -h ${{ steps.db-secrets.outputs.db_host }} \
+            -p ${{ steps.db-secrets.outputs.db_port }} \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
+            -c "SELECT version();"
+        env:
+          PGPASSWORD: ${{ steps.db-secrets.outputs.db_password }}
+
+      - name: Show pending migrations
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -connectRetries=5 \
+            info
+
+      - name: Run Flyway migrations
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -connectRetries=5 \
+            -validateMigrationNaming=true \
+            migrate
+
+      - name: Verify migrations applied
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            info
+
+      - name: Create migration summary
+        if: always()
+        run: |
+          echo "## Database Migration Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: ${{ steps.db-secrets.outputs.db_host }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
