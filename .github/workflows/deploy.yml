@@ -1,0 +1,165 @@
+# Database Migration Deployment
+# Runs Flyway migrations against production Aurora database
+
+name: Deploy Database Migrations
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  FLYWAY_VERSION: "11"
+
+jobs:
+  deploy-migrations:
+    name: Deploy Migrations to Production
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    concurrency:
+      group: production-deployment
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get database credentials from Secrets Manager
+        id: db-secrets
+        run: |
+          # Fetch secret once to reduce API calls (5 → 1)
+          SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id portfolio/prod/database/credentials \
+            --region ${{ env.AWS_REGION }} \
+            --query 'SecretString' \
+            --output text)
+
+          # Parse all fields from the single API response
+          DB_HOST=$(echo "$SECRET" | jq -r '.host')
+          DB_PORT=$(echo "$SECRET" | jq -r '.port')
+          DB_NAME=$(echo "$SECRET" | jq -r '.dbname')
+          DB_USER=$(echo "$SECRET" | jq -r '.username')
+          DB_PASSWORD=$(echo "$SECRET" | jq -r '.password')
+
+          # Validate that all required fields were extracted successfully
+          for var in DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do
+            if [[ -z "${!var}" || "${!var}" == "null" ]]; then
+              echo "::error::Failed to extract $var from Secrets Manager payload" >&2
+              exit 1
+            fi
+          done
+
+          echo "::add-mask::$DB_PASSWORD"
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
+          echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
+          echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Verify database connectivity and schema readiness
+        run: |
+          docker run --rm \
+            --network host \
+            postgres:16-alpine \
+            psql \
+            -h ${{ steps.db-secrets.outputs.db_host }} \
+            -p ${{ steps.db-secrets.outputs.db_port }} \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
+            -c "SELECT version();
+                SELECT COUNT(*) as flyway_table_exists
+                FROM information_schema.tables
+                WHERE table_name='flyway_schema_history';"
+        env:
+          PGPASSWORD: ${{ steps.db-secrets.outputs.db_password }}
+
+      - name: Show pending migrations
+        id: pending-migrations
+        run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
+          PENDING_OUTPUT=$(docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url="${DB_URL}" \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -connectRetries=5 \
+            -outputType=json \
+            info)
+
+          echo "$PENDING_OUTPUT"
+
+          # Count pending migrations using JSON output
+          PENDING_COUNT=$(echo "$PENDING_OUTPUT" | jq '[.migrations[] | select(.state=="Pending")] | length')
+          echo "pending_count=$PENDING_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Run Flyway migrations
+        id: run-migrations
+        run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
+          docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url="${DB_URL}" \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -connectRetries=5 \
+            -validateMigrationNaming=true \
+            -outputType=json \
+            migrate
+
+      - name: Verify migrations applied
+        id: applied-migrations
+        run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
+          APPLIED_OUTPUT=$(docker run --rm \
+            -v ${{ github.workspace }}/migrations:/flyway/sql \
+            flyway/flyway:${{ env.FLYWAY_VERSION }} \
+            -url="${DB_URL}" \
+            -user=${{ steps.db-secrets.outputs.db_user }} \
+            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -outputType=json \
+            info)
+
+          echo "$APPLIED_OUTPUT"
+
+          # Count applied migrations using JSON output
+          APPLIED_COUNT=$(echo "$APPLIED_OUTPUT" | jq '[.migrations[] | select(.state=="Success")] | length')
+          echo "applied_count=$APPLIED_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Create migration summary
+        if: always()
+        run: |
+          PENDING="${{ steps.pending-migrations.outputs.pending_count }}"
+          APPLIED="${{ steps.applied-migrations.outputs.applied_count }}"
+          DB_HOST="${{ steps.db-secrets.outputs.db_host }}"
+
+          echo "## Database Migration Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: ${DB_HOST:-N/A}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pending Migrations**: ${PENDING:-N/A}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Applied Migrations**: ${APPLIED:-N/A}" >> $GITHUB_STEP_SUMMARY

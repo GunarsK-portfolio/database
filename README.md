@@ -264,6 +264,121 @@ docker-compose run --rm flyway validate
 docker-compose run --rm flyway repair
 ```
 
+## Production Deployment
+
+### Prerequisites
+
+**GitHub Secrets Required:**
+
+- `AWS_ROLE_ARN` - OIDC role ARN for AWS authentication (e.g., `arn:aws:iam::123456789012:role/GitHubActionsRole`)
+
+**Configuration:**
+
+- AWS region is set to `eu-west-1` by default in the workflow. Override by setting `AWS_REGION` secret if deploying to a different region.
+
+**AWS Resources Required:**
+
+- Aurora Serverless v2 database (created by infrastructure)
+- Secrets Manager secret: `portfolio/prod/database/credentials` containing:
+
+  ```json
+  {
+    "host": "aurora-endpoint.region.rds.amazonaws.com",
+    "port": "5432",
+    "dbname": "portfolio",
+    "username": "portfolio_owner",
+    "password": "secure-production-password"
+  }
+  ```
+
+### Deployment Workflow
+
+The database uses tag-based deployment via GitHub Actions:
+
+```bash
+# 1. Ensure infrastructure is deployed first (Aurora database exists)
+# 2. Commit migration changes to main/develop
+# 3. Create and push a version tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# This triggers .github/workflows/deploy.yml which:
+# - Authenticates to AWS via OIDC
+# - Retrieves Aurora credentials from Secrets Manager
+# - Verifies database connectivity
+# - Shows pending migrations
+# - Runs Flyway migrations
+# - Verifies successful application
+```
+
+### Pre-Deployment Safety Checklist
+
+Before running migrations in production:
+
+1. **Create Aurora Snapshot**
+
+   ```bash
+   aws rds create-db-cluster-snapshot \
+     --db-cluster-snapshot-identifier portfolio-pre-deploy-$(date +%Y%m%d-%H%M%S) \
+     --db-cluster-identifier portfolio-aurora-cluster \
+     --region eu-west-1
+   ```
+
+2. **Verify Automated Backups Enabled**
+   - Check Aurora cluster has automated backups with retention > 7 days
+   - Confirm backup window doesn't conflict with deployment time
+
+3. **Review Pending Migrations**
+   - Check GitHub Actions workflow logs for pending migration list
+   - Review migration SQL files for destructive operations
+
+4. **Understand Flyway Behavior**
+   - **Idempotency**: Flyway tracks applied migrations in `flyway_schema_history` table, preventing re-application
+   - **No Rollback**: Production does not use Flyway undo scripts; recovery requires restoring from snapshot
+   - **Validation**: Flyway validates migration checksums before applying new migrations
+
+5. **Recovery Plan**
+   - If deployment fails: Review error logs, fix migration, create new tag
+   - If data corruption occurs: Restore from snapshot created in step 1
+   - Expected RTO (Recovery Time Objective): ~15-30 minutes for snapshot restore
+
+**Environment Protection:**
+
+The production deployment requires GitHub environment protection to be configured:
+
+- Go to repository Settings → Environments → production
+- Configure deployment protection rules (required reviewers, wait timer, etc.)
+- Add deployment branch/tag rules to allow `v*` tags
+
+### Manual Deployment
+
+For manual migration deployment (alternative to workflow):
+
+```bash
+# 1. Get Aurora endpoint from AWS Console or Terraform outputs
+# 2. Get credentials from AWS Secrets Manager
+aws secretsmanager get-secret-value \
+  --secret-id portfolio/prod/database/credentials \
+  --region eu-west-1
+
+# 3. Run Flyway migrations
+docker run --rm \
+  -v ./migrations:/flyway/sql \
+  flyway/flyway:11 \
+  -url=jdbc:postgresql://<aurora-endpoint>:5432/portfolio \
+  -user=portfolio_owner \
+  -password=<password> \
+  migrate
+```
+
+**Security Notes:**
+
+- Never commit production credentials to Git
+- Credentials are stored in AWS Secrets Manager
+- Workflow uses OIDC (no long-lived credentials)
+- Passwords are masked in GitHub Actions logs
+- Seed scripts are NOT run in production
+
 ## Available Commands
 
 This project uses [Task](https://taskfile.dev) for development commands:
