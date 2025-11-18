@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
+    concurrency:
+      group: production-deployment
+      cancel-in-progress: false
 
     steps:
       - name: Checkout code
@@ -50,6 +53,14 @@ jobs:
           DB_NAME=$(echo "$SECRET" | jq -r '.dbname')
           DB_USER=$(echo "$SECRET" | jq -r '.username')
           DB_PASSWORD=$(echo "$SECRET" | jq -r '.password')
+
+          # Validate that all required fields were extracted successfully
+          for var in DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do
+            if [[ -z "${!var}" || "${!var}" == "null" ]]; then
+              echo "::error::Failed to extract $var from Secrets Manager payload" >&2
+              exit 1
+            fi
+          done
 
           echo "::add-mask::$DB_PASSWORD"
           echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
@@ -99,6 +110,7 @@ jobs:
           echo "pending_count=$PENDING_COUNT" >> $GITHUB_OUTPUT
 
       - name: Run Flyway migrations
+        id: run-migrations
         run: |
           DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
           DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
@@ -112,6 +124,7 @@ jobs:
             -password=${{ steps.db-secrets.outputs.db_password }} \
             -connectRetries=5 \
             -validateMigrationNaming=true \
+            -outputType=json \
             migrate
 
       - name: Verify migrations applied
