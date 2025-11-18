@@ -22,6 +22,7 @@ jobs:
     name: Deploy Migrations to Production
     runs-on: ubuntu-latest
     environment: production
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -74,27 +75,36 @@ jobs:
       - name: Show pending migrations
         id: pending-migrations
         run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
           PENDING_OUTPUT=$(docker run --rm \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
-            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -url="${DB_URL}" \
             -user=${{ steps.db-secrets.outputs.db_user }} \
             -password=${{ steps.db-secrets.outputs.db_password }} \
             -connectRetries=5 \
+            -outputType=json \
             info)
 
           echo "$PENDING_OUTPUT"
 
-          # Count pending migrations
-          PENDING_COUNT=$(echo "$PENDING_OUTPUT" | grep -c "| Pending" || echo "0")
+          # Count pending migrations using JSON output
+          PENDING_COUNT=$(echo "$PENDING_OUTPUT" | jq '[.migrations[] | select(.state=="Pending")] | length')
           echo "pending_count=$PENDING_COUNT" >> $GITHUB_OUTPUT
 
       - name: Run Flyway migrations
         run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
           docker run --rm \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
-            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -url="${DB_URL}" \
             -user=${{ steps.db-secrets.outputs.db_user }} \
             -password=${{ steps.db-secrets.outputs.db_password }} \
             -connectRetries=5 \
@@ -104,18 +114,23 @@ jobs:
       - name: Verify migrations applied
         id: applied-migrations
         run: |
+          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
+          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
+          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+
           APPLIED_OUTPUT=$(docker run --rm \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
-            -url=jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}:${{ steps.db-secrets.outputs.db_port }}/${{ steps.db-secrets.outputs.db_name }} \
+            -url="${DB_URL}" \
             -user=${{ steps.db-secrets.outputs.db_user }} \
             -password=${{ steps.db-secrets.outputs.db_password }} \
+            -outputType=json \
             info)
 
           echo "$APPLIED_OUTPUT"
 
-          # Count applied migrations
-          APPLIED_COUNT=$(echo "$APPLIED_OUTPUT" | grep -c "| Success" || echo "0")
+          # Count applied migrations using JSON output
+          APPLIED_COUNT=$(echo "$APPLIED_OUTPUT" | jq '[.migrations[] | select(.state=="Success")] | length')
           echo "applied_count=$APPLIED_COUNT" >> $GITHUB_OUTPUT
 
       - name: Create migration summary

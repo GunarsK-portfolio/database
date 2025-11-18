@@ -316,6 +316,7 @@ git push origin v1.0.0
 Before running migrations in production:
 
 1. **Create Aurora Snapshot**
+
    ```bash
    aws rds create-db-cluster-snapshot \
      --db-cluster-snapshot-identifier portfolio-pre-deploy-$(date +%Y%m%d-%H%M%S) \
