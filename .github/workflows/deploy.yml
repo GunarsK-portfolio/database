@@ -58,7 +58,7 @@ jobs:
           echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
           echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
 
-      - name: Verify database connectivity
+      - name: Verify database connectivity and schema readiness
         run: |
           docker run --rm \
             --network host \
@@ -68,7 +68,10 @@ jobs:
             -p ${{ steps.db-secrets.outputs.db_port }} \
             -U ${{ steps.db-secrets.outputs.db_user }} \
             -d ${{ steps.db-secrets.outputs.db_name }} \
-            -c "SELECT version();"
+            -c "SELECT version();
+                SELECT COUNT(*) as flyway_table_exists
+                FROM information_schema.tables
+                WHERE table_name='flyway_schema_history';"
         env:
           PGPASSWORD: ${{ steps.db-secrets.outputs.db_password }}
 
@@ -136,10 +139,14 @@ jobs:
       - name: Create migration summary
         if: always()
         run: |
+          PENDING="${{ steps.pending-migrations.outputs.pending_count }}"
+          APPLIED="${{ steps.applied-migrations.outputs.applied_count }}"
+          DB_HOST="${{ steps.db-secrets.outputs.db_host }}"
+
           echo "## Database Migration Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Database**: ${{ steps.db-secrets.outputs.db_host }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database**: ${DB_HOST:-N/A}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Pending Migrations**: ${{ steps.pending-migrations.outputs.pending_count }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Applied Migrations**: ${{ steps.applied-migrations.outputs.applied_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pending Migrations**: ${PENDING:-N/A}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Applied Migrations**: ${APPLIED:-N/A}" >> $GITHUB_STEP_SUMMARY
