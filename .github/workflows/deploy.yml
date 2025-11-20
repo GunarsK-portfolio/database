@@ -166,9 +166,13 @@ jobs:
           timeout 30 docker run --rm \
             --network host \
             -e PGPASSWORD='${{ steps.db-secrets.outputs.db_password }}' \
+            -e PGSSLMODE=require \
             postgres:17-alpine \
             psql \
-            "sslmode=require host=localhost port=5432 user=${{ steps.db-secrets.outputs.db_user }} dbname=${{ steps.db-secrets.outputs.db_name }}" \
+            -h 127.0.0.1 \
+            -p 5432 \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
             -c "SELECT version();
                 SELECT COUNT(*) as flyway_table_exists
                 FROM information_schema.tables
