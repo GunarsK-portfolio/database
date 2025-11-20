@@ -169,7 +169,7 @@ jobs:
             -e PGSSLMODE=require \
             postgres:17-alpine \
             psql \
-            -h 127.0.0.1 \
+            -h localhost \
             -p 5432 \
             -U ${{ steps.db-secrets.outputs.db_user }} \
             -d ${{ steps.db-secrets.outputs.db_name }} \
@@ -177,6 +177,20 @@ jobs:
                 SELECT COUNT(*) as flyway_table_exists
                 FROM information_schema.tables
                 WHERE table_name='flyway_schema_history';"
+
+      - name: Grant schema permissions
+        run: |
+          docker run --rm \
+            --network host \
+            -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
+            -e PGSSLMODE=require \
+            postgres:17-alpine \
+            psql \
+            -h localhost \
+            -p 5432 \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
+            -c "ALTER SCHEMA public OWNER TO ${{ steps.db-secrets.outputs.db_user }};"
 
       - name: Show pending migrations
         id: pending-migrations
