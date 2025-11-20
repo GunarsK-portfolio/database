@@ -37,37 +37,119 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Install Session Manager plugin
+        run: |
+          curl -sS \
+            "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" \
+            -o "session-manager-plugin.deb"
+          sudo dpkg -i session-manager-plugin.deb
+
+      - name: Get bastion instance ID and state
+        id: bastion
+        run: |
+          INSTANCE_INFO=$(aws ec2 describe-instances \
+            --region ${{ env.AWS_REGION }} \
+            --filters "Name=tag:Name,Values=portfolio-prod-bastion" \
+            --query 'Reservations[0].Instances[0].[InstanceId,State.Name]' \
+            --output text)
+
+          INSTANCE_ID=$(echo "$INSTANCE_INFO" | awk '{print $1}')
+          INSTANCE_STATE=$(echo "$INSTANCE_INFO" | awk '{print $2}')
+
+          if [[ "$INSTANCE_ID" == "None" || -z "$INSTANCE_ID" ]]; then
+            echo "::error::Bastion instance not found"
+            exit 1
+          fi
+
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "instance_state=$INSTANCE_STATE" >> $GITHUB_OUTPUT
+          echo "Bastion instance: $INSTANCE_ID (state: $INSTANCE_STATE)"
+
+      - name: Start bastion instance if stopped
+        if: steps.bastion.outputs.instance_state != 'running'
+        run: |
+          echo "Starting bastion instance ${{ steps.bastion.outputs.instance_id }}..."
+          aws ec2 start-instances --instance-ids ${{ steps.bastion.outputs.instance_id }} --region ${{ env.AWS_REGION }}
+
+          echo "Waiting for bastion to reach running state..."
+          aws ec2 wait instance-running \
+            --instance-ids ${{ steps.bastion.outputs.instance_id }} \
+            --region ${{ env.AWS_REGION }}
+
+          echo "Waiting additional 30s for SSM agent to initialize..."
+          sleep 30
+
+          echo "Bastion instance is now running"
+
+      - name: Get Aurora endpoint
+        id: aurora
+        run: |
+          DB_HOST=$(aws rds describe-db-clusters \
+            --region ${{ env.AWS_REGION }} \
+            --query 'DBClusters[?contains(DBClusterIdentifier, `portfolio`)].Endpoint' \
+            --output text)
+
+          if [[ -z "$DB_HOST" ]]; then
+            echo "::error::Aurora cluster not found"
+            exit 1
+          fi
+
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "Aurora endpoint: $DB_HOST"
+
       - name: Get database credentials from Secrets Manager
         id: db-secrets
         run: |
-          # Fetch secret once to reduce API calls (5 → 1)
+          # Get credentials from Terraform-managed secret
           SECRET=$(aws secretsmanager get-secret-value \
-            --secret-id portfolio/prod/database/credentials \
+            --secret-id portfolio-prod-aurora-owner-2025111915155561680000000d \
             --region ${{ env.AWS_REGION }} \
             --query 'SecretString' \
             --output text)
 
-          # Parse all fields from the single API response
-          DB_HOST=$(echo "$SECRET" | jq -r '.host')
-          DB_PORT=$(echo "$SECRET" | jq -r '.port')
-          DB_NAME=$(echo "$SECRET" | jq -r '.dbname')
-          DB_USER=$(echo "$SECRET" | jq -r '.username')
-          DB_PASSWORD=$(echo "$SECRET" | jq -r '.password')
+          DB_USER=$(echo "$SECRET" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+          DB_PASSWORD=$(echo "$SECRET" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
 
-          # Validate that all required fields were extracted successfully
-          for var in DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do
-            if [[ -z "${!var}" || "${!var}" == "null" ]]; then
-              echo "::error::Failed to extract $var from Secrets Manager payload" >&2
-              exit 1
-            fi
-          done
+          if [[ -z "$DB_USER" || -z "$DB_PASSWORD" ]]; then
+            echo "::error::Failed to extract credentials from Secrets Manager"
+            exit 1
+          fi
 
           echo "::add-mask::$DB_PASSWORD"
-          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
-          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
-          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
           echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
           echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+          echo "db_name=portfolio" >> $GITHUB_OUTPUT
+          echo "db_port=5432" >> $GITHUB_OUTPUT
+          echo "db_host=${{ steps.aurora.outputs.db_host }}" >> $GITHUB_OUTPUT
+
+      - name: Start SSM port forwarding to Aurora
+        id: ssm-tunnel
+        run: |
+          DB_HOST="${{ steps.db-secrets.outputs.db_host }}"
+
+          # Start port forwarding in background
+          aws ssm start-session \
+            --target ${{ steps.bastion.outputs.instance_id }} \
+            --document-name AWS-StartPortForwardingSessionToRemoteHost \
+            --parameters "{\"host\":[\"$DB_HOST\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"5432\"]}" \
+            --region ${{ env.AWS_REGION }} > /tmp/ssm-session.log 2>&1 &
+
+          SSM_PID=$!
+          echo "ssm_pid=$SSM_PID" >> $GITHUB_OUTPUT
+          echo "Started SSM session (PID: $SSM_PID)"
+
+          # Wait for tunnel to establish
+          echo "Waiting for SSM tunnel to establish..."
+          sleep 15
+
+          # Verify tunnel is running
+          if ! kill -0 $SSM_PID 2>/dev/null; then
+            echo "::error::SSM session failed to start"
+            cat /tmp/ssm-session.log
+            exit 1
+          fi
+
+          echo "SSM tunnel established successfully"
 
       - name: Verify database connectivity and schema readiness
         run: |
@@ -75,8 +157,8 @@ jobs:
             --network host \
             postgres:16-alpine \
             psql \
-            -h ${{ steps.db-secrets.outputs.db_host }} \
-            -p ${{ steps.db-secrets.outputs.db_port }} \
+            -h localhost \
+            -p 5432 \
             -U ${{ steps.db-secrets.outputs.db_user }} \
             -d ${{ steps.db-secrets.outputs.db_name }} \
             -c "SELECT version();
@@ -89,11 +171,10 @@ jobs:
       - name: Show pending migrations
         id: pending-migrations
         run: |
-          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
-          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
-          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
 
           PENDING_OUTPUT=$(docker run --rm \
+            --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
@@ -112,11 +193,10 @@ jobs:
       - name: Run Flyway migrations
         id: run-migrations
         run: |
-          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
-          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
-          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
 
           docker run --rm \
+            --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
@@ -130,11 +210,10 @@ jobs:
       - name: Verify migrations applied
         id: applied-migrations
         run: |
-          DB_URL="jdbc:postgresql://${{ steps.db-secrets.outputs.db_host }}"
-          DB_URL="${DB_URL}:${{ steps.db-secrets.outputs.db_port }}"
-          DB_URL="${DB_URL}/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
 
           APPLIED_OUTPUT=$(docker run --rm \
+            --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
@@ -163,3 +242,19 @@ jobs:
           echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Pending Migrations**: ${PENDING:-N/A}" >> $GITHUB_STEP_SUMMARY
           echo "- **Applied Migrations**: ${APPLIED:-N/A}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Terminate SSM session
+        if: always()
+        run: |
+          if [[ -n "${{ steps.ssm-tunnel.outputs.ssm_pid }}" ]]; then
+            echo "Terminating SSM session (PID: ${{ steps.ssm-tunnel.outputs.ssm_pid }})"
+            kill ${{ steps.ssm-tunnel.outputs.ssm_pid }} 2>/dev/null || true
+            sleep 2
+          fi
+
+      - name: Stop bastion instance
+        if: always() && steps.bastion.outputs.instance_state != 'running'
+        run: |
+          echo "Stopping bastion instance ${{ steps.bastion.outputs.instance_id }}..."
+          aws ec2 stop-instances --instance-ids ${{ steps.bastion.outputs.instance_id }} --region ${{ env.AWS_REGION }}
+          echo "Bastion instance stop initiated"
