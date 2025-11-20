@@ -107,8 +107,8 @@ jobs:
             --query 'SecretString' \
             --output text)
 
-          DB_USER=$(echo "$SECRET" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
-          DB_PASSWORD=$(echo "$SECRET" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
+          DB_USER=$(echo "$SECRET" | jq -r '.username')
+          DB_PASSWORD=$(echo "$SECRET" | jq -r '.password')
 
           if [[ -z "$DB_USER" || -z "$DB_PASSWORD" ]]; then
             echo "::error::Failed to extract credentials from Secrets Manager"
@@ -165,7 +165,7 @@ jobs:
         run: |
           timeout 30 docker run --rm \
             --network host \
-            -e PGPASSWORD='${{ steps.db-secrets.outputs.db_password }}' \
+            -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
             -e PGSSLMODE=require \
             postgres:17-alpine \
             psql \
