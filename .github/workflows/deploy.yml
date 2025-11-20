@@ -168,10 +168,7 @@ jobs:
             -e PGPASSWORD='${{ steps.db-secrets.outputs.db_password }}' \
             postgres:17-alpine \
             psql \
-            -h localhost \
-            -p 5432 \
-            -U ${{ steps.db-secrets.outputs.db_user }} \
-            -d ${{ steps.db-secrets.outputs.db_name }} \
+            "sslmode=require host=localhost port=5432 user=${{ steps.db-secrets.outputs.db_user }} dbname=${{ steps.db-secrets.outputs.db_name }}" \
             -c "SELECT version();
                 SELECT COUNT(*) as flyway_table_exists
                 FROM information_schema.tables
