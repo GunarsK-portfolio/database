@@ -210,8 +210,8 @@ jobs:
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
-            -user=${{ steps.db-secrets.outputs.db_user }} \
-            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -user="${{ steps.db-secrets.outputs.db_user }}" \
+            -password="${{ steps.db-secrets.outputs.db_password }}" \
             -connectRetries=5 \
             -validateMigrationNaming=true \
             -outputType=json \
@@ -227,8 +227,8 @@ jobs:
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
-            -user=${{ steps.db-secrets.outputs.db_user }} \
-            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -user="${{ steps.db-secrets.outputs.db_user }}" \
+            -password="${{ steps.db-secrets.outputs.db_password }}" \
             -outputType=json \
             info)
 
