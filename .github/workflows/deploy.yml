@@ -177,7 +177,7 @@ jobs:
       - name: Show pending migrations
         id: pending-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           PENDING_OUTPUT=$(docker run --rm \
             --network host \
@@ -199,7 +199,7 @@ jobs:
       - name: Run Flyway migrations
         id: run-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           docker run --rm \
             --network host \
@@ -216,7 +216,7 @@ jobs:
       - name: Verify migrations applied
         id: applied-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           APPLIED_OUTPUT=$(docker run --rm \
             --network host \
