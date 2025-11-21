@@ -107,8 +107,8 @@ jobs:
             --query 'SecretString' \
             --output text)
 
-          DB_USER=$(echo "$SECRET" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
-          DB_PASSWORD=$(echo "$SECRET" | grep -o '"password":"[^"]*"' | cut -d'"' -f4)
+          DB_USER=$(echo "$SECRET" | jq -r '.username')
+          DB_PASSWORD=$(echo "$SECRET" | jq -r '.password')
 
           if [[ -z "$DB_USER" || -z "$DB_PASSWORD" ]]; then
             echo "::error::Failed to extract credentials from Secrets Manager"
@@ -165,27 +165,45 @@ jobs:
         run: |
           timeout 30 docker run --rm \
             --network host \
-            -e PGPASSWORD='${{ steps.db-secrets.outputs.db_password }}' \
+            -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
+            -e PGSSLMODE=require \
             postgres:17-alpine \
             psql \
-            "sslmode=require host=localhost port=5432 user=${{ steps.db-secrets.outputs.db_user }} dbname=${{ steps.db-secrets.outputs.db_name }}" \
+            -h localhost \
+            -p 5432 \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
             -c "SELECT version();
                 SELECT COUNT(*) as flyway_table_exists
                 FROM information_schema.tables
                 WHERE table_name='flyway_schema_history';"
 
+      - name: Grant schema permissions
+        run: |
+          docker run --rm \
+            --network host \
+            -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
+            -e PGSSLMODE=require \
+            postgres:17-alpine \
+            psql \
+            -h localhost \
+            -p 5432 \
+            -U ${{ steps.db-secrets.outputs.db_user }} \
+            -d ${{ steps.db-secrets.outputs.db_name }} \
+            -c "ALTER SCHEMA public OWNER TO ${{ steps.db-secrets.outputs.db_user }};"
+
       - name: Show pending migrations
         id: pending-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           PENDING_OUTPUT=$(docker run --rm \
             --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
-            -user=${{ steps.db-secrets.outputs.db_user }} \
-            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -user="${{ steps.db-secrets.outputs.db_user }}" \
+            -password="${{ steps.db-secrets.outputs.db_password }}" \
             -connectRetries=5 \
             -outputType=json \
             info)
@@ -199,15 +217,15 @@ jobs:
       - name: Run Flyway migrations
         id: run-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           docker run --rm \
             --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
-            -user=${{ steps.db-secrets.outputs.db_user }} \
-            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -user="${{ steps.db-secrets.outputs.db_user }}" \
+            -password="${{ steps.db-secrets.outputs.db_password }}" \
             -connectRetries=5 \
             -validateMigrationNaming=true \
             -outputType=json \
@@ -216,15 +234,15 @@ jobs:
       - name: Verify migrations applied
         id: applied-migrations
         run: |
-          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}"
+          DB_URL="jdbc:postgresql://localhost:5432/${{ steps.db-secrets.outputs.db_name }}?sslmode=require"
 
           APPLIED_OUTPUT=$(docker run --rm \
             --network host \
             -v ${{ github.workspace }}/migrations:/flyway/sql \
             flyway/flyway:${{ env.FLYWAY_VERSION }} \
             -url="${DB_URL}" \
-            -user=${{ steps.db-secrets.outputs.db_user }} \
-            -password=${{ steps.db-secrets.outputs.db_password }} \
+            -user="${{ steps.db-secrets.outputs.db_user }}" \
+            -password="${{ steps.db-secrets.outputs.db_password }}" \
             -outputType=json \
             info)
 
