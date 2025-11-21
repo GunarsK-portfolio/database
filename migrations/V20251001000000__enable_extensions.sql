@@ -10,5 +10,5 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 -- Note: Available in Aurora PostgreSQL, auto-loaded
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
-COMMENT ON EXTENSION pg_stat_statements IS 'Track execution statistics of all SQL statements executed';
-COMMENT ON EXTENSION pg_cron IS 'Job scheduler for running periodic tasks';
+-- Note: COMMENT ON EXTENSION requires ownership, which is typically held by
+-- the postgres superuser. Comments are omitted to allow non-superuser migrations.
