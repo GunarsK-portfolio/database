@@ -98,9 +98,13 @@ jobs:
             -e DB_PASSWORD=portfolio_admin_ci_pass \
             -e DB_USER_READONLY=portfolio_public \
             -e DB_PASSWORD_READONLY=portfolio_public_ci_pass \
+            -e DB_USER_MESSAGING=portfolio_messaging \
+            -e DB_PASSWORD_MESSAGING=portfolio_messaging_ci_pass \
             -v ${{ github.workspace }}/docker/postgres:/scripts \
             ghcr.io/gunarsk-portfolio/postgres-image:latest \
-            sh -c "envsubst < /scripts/init-users.sql.template | psql -h localhost -U ${{ secrets.CI_DB_USER }} -d ${{ secrets.CI_DB_NAME }}"
+            sh -c "envsubst < /scripts/init-users.sql.template | \
+              psql -h localhost -U ${{ secrets.CI_DB_USER }} \
+              -d ${{ secrets.CI_DB_NAME }}"
 
       - name: Run Flyway migrations
         run: |
