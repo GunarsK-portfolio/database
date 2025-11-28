@@ -66,6 +66,21 @@ $$;
 GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${DB_USER_READONLY};
 COMMENT ON ROLE ${DB_USER_READONLY} IS 'Public API user - SELECT only';
 
+-- MESSAGING USER (for messaging-api - CRUD on messaging schema only)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${DB_USER_MESSAGING}') THEN
+        CREATE ROLE ${DB_USER_MESSAGING} WITH LOGIN PASSWORD '${DB_PASSWORD_MESSAGING}';
+        RAISE NOTICE 'Created role ${DB_USER_MESSAGING}';
+    ELSE
+        RAISE NOTICE 'Role ${DB_USER_MESSAGING} already exists';
+    END IF;
+END
+$$;
+
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${DB_USER_MESSAGING};
+COMMENT ON ROLE ${DB_USER_MESSAGING} IS 'Messaging API user - CRUD on messaging schema only';
+
 -- =============================================================================
 -- EXTENSION PERMISSIONS
 -- =============================================================================
