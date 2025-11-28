@@ -29,6 +29,11 @@ ALTER TABLE messaging.contact_messages
     ADD CONSTRAINT chk_contact_messages_status
     CHECK (status IN ('pending', 'queued', 'sent', 'failed'));
 
+-- Add check constraint for basic email format validation
+ALTER TABLE messaging.contact_messages
+    ADD CONSTRAINT chk_contact_messages_email_format
+    CHECK (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
 -- Add table and column comments
 COMMENT ON TABLE messaging.contact_messages IS 'Contact form submissions from public website';
 COMMENT ON COLUMN messaging.contact_messages.id IS 'Unique message identifier';

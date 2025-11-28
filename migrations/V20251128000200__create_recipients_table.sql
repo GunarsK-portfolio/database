@@ -16,6 +16,11 @@ CREATE TRIGGER update_recipients_updated_at
     BEFORE UPDATE ON messaging.recipients
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- Add check constraint for basic email format validation
+ALTER TABLE messaging.recipients
+    ADD CONSTRAINT chk_recipients_email_format
+    CHECK (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
 -- Add table and column comments
 COMMENT ON TABLE messaging.recipients IS 'Email recipients for contact form notifications';
 COMMENT ON COLUMN messaging.recipients.id IS 'Unique recipient identifier';
