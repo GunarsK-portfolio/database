@@ -138,9 +138,9 @@ jobs:
           echo "ssm_pid=$SSM_PID" >> $GITHUB_OUTPUT
           echo "Started SSM session (PID: $SSM_PID)"
 
-          # Wait for tunnel to establish
+          # Wait for tunnel to establish (longer wait for stability)
           echo "Waiting for SSM tunnel to establish..."
-          sleep 20
+          sleep 30
 
           # Check if process is still running
           if ! kill -0 $SSM_PID 2>/dev/null; then
@@ -149,34 +149,53 @@ jobs:
             exit 1
           fi
 
-          # Check if port is listening
-          if ! timeout 10 bash -c "until nc -z localhost 5432; do sleep 1; done"; then
-            echo "::error::Port 5432 not listening after 10 seconds"
-            echo "SSM session log:"
-            cat /tmp/ssm-session.log
-            echo "Process status:"
-            ps aux | grep -i ssm || true
-            exit 1
-          fi
+          # Check if port is listening with retries
+          echo "Checking if port 5432 is listening..."
+          for i in {1..10}; do
+            if nc -z localhost 5432 2>/dev/null; then
+              echo "SSM tunnel established successfully - port 5432 is listening"
+              exit 0
+            fi
+            echo "Attempt $i/10: Port not ready, waiting..."
+            sleep 3
+          done
 
-          echo "SSM tunnel established successfully - port 5432 is listening"
+          echo "::error::Port 5432 not listening after 30 seconds"
+          echo "SSM session log:"
+          cat /tmp/ssm-session.log
+          echo "Process status:"
+          ps aux | grep -i ssm || true
+          exit 1
 
       - name: Verify database connectivity and schema readiness
         run: |
-          timeout 30 docker run --rm \
-            --network host \
-            -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
-            -e PGSSLMODE=require \
-            postgres:17-alpine \
-            psql \
-            -h localhost \
-            -p 5432 \
-            -U ${{ steps.db-secrets.outputs.db_user }} \
-            -d ${{ steps.db-secrets.outputs.db_name }} \
-            -c "SELECT version();
-                SELECT COUNT(*) as flyway_table_exists
-                FROM information_schema.tables
-                WHERE table_name='flyway_schema_history';"
+          # Retry logic for Docker connectivity through SSM tunnel
+          # Use 127.0.0.1 explicitly (not localhost) for IPv4
+          for attempt in {1..10}; do
+            echo "Connection attempt $attempt/10..."
+            if timeout 60 docker run --rm \
+              --network host \
+              -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
+              -e PGSSLMODE=require \
+              -e PGCONNECT_TIMEOUT=30 \
+              postgres:17-alpine \
+              psql \
+              -h 127.0.0.1 \
+              -p 5432 \
+              -U ${{ steps.db-secrets.outputs.db_user }} \
+              -d ${{ steps.db-secrets.outputs.db_name }} \
+              -c "SELECT version();
+                  SELECT COUNT(*) as flyway_table_exists
+                  FROM information_schema.tables
+                  WHERE table_name='flyway_schema_history';"; then
+              echo "Database connection successful"
+              exit 0
+            fi
+            echo "Connection failed, waiting before retry..."
+            sleep 10
+          done
+          echo "::error::Failed to connect to database after 10 attempts"
+          exit 1
 
       - name: Grant schema permissions
         run: |
