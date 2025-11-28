@@ -138,7 +138,7 @@ jobs:
           echo "ssm_pid=$SSM_PID" >> $GITHUB_OUTPUT
           echo "Started SSM session (PID: $SSM_PID)"
 
-          # Wait for tunnel to establish (longer wait for stability)
+          # Wait for tunnel to establish
           echo "Waiting for SSM tunnel to establish..."
           sleep 30
 
@@ -170,17 +170,15 @@ jobs:
       - name: Verify database connectivity and schema readiness
         run: |
           # Retry logic for Docker connectivity through SSM tunnel
-          # Use 127.0.0.1 explicitly (not localhost) for IPv4
-          for attempt in {1..10}; do
-            echo "Connection attempt $attempt/10..."
-            if timeout 60 docker run --rm \
+          for attempt in {1..5}; do
+            echo "Connection attempt $attempt/5..."
+            if timeout 30 docker run --rm \
               --network host \
               -e "PGPASSWORD=${{ steps.db-secrets.outputs.db_password }}" \
               -e PGSSLMODE=require \
-              -e PGCONNECT_TIMEOUT=30 \
               postgres:17-alpine \
               psql \
-              -h 127.0.0.1 \
+              -h localhost \
               -p 5432 \
               -U ${{ steps.db-secrets.outputs.db_user }} \
               -d ${{ steps.db-secrets.outputs.db_name }} \
@@ -192,9 +190,9 @@ jobs:
               exit 0
             fi
             echo "Connection failed, waiting before retry..."
-            sleep 10
+            sleep 5
           done
-          echo "::error::Failed to connect to database after 10 attempts"
+          echo "::error::Failed to connect to database after 5 attempts"
           exit 1
 
       - name: Grant schema permissions
