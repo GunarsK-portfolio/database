@@ -1,150 +1,124 @@
 -- Seed miniature paints
+-- Paint catalog for AK Interactive 3GEN and Army Painter Warpaints Fanatic
 
 WITH paints_data(paint_name, manufacturer_name, color_hex, paint_type) AS (
     VALUES
-    -- AK Interactive Basics
-    ('White', 'AK Interactive', '#FFFFFF', 'Base'),
-    ('Black', 'AK Interactive', '#000000', 'Base'),
-    ('Grey', 'AK Interactive', '#808080', 'Base'),
-    ('Light Grey', 'AK Interactive', '#C0C0C0', 'Layer'),
-    ('Dark Grey', 'AK Interactive', '#404040', 'Base'),
+    -- ============================================
+    -- AK INTERACTIVE 3rd GENERATION ACRYLICS
+    -- ============================================
+    ('AK11081 Fluorescent Orange', 'AK Interactive', '#FF6600', 'Layer'),
+    ('AK11049 Fluorescent Yellow', 'AK Interactive', '#CCFF00', 'Layer'),
+    ('AK11035 Sand Yellow', 'AK Interactive', '#C2A355', 'Base'),
+    ('AK11046 Radiant Yellow', 'AK Interactive', '#FFEA00', 'Layer'),
+    ('AK11088 Deep Red', 'AK Interactive', '#850101', 'Base'),
+    ('AK11067 Magenta', 'AK Interactive', '#FF0090', 'Base'),
+    ('AK11072 Deep Violet', 'AK Interactive', '#5A189A', 'Base'),
+    ('AK11061 Salmon', 'AK Interactive', '#FA8072', 'Layer'),
+    ('AK11176 Deep Sky Blue', 'AK Interactive', '#00BFFF', 'Layer'),
+    ('AK11179 Ultramarine', 'AK Interactive', '#4166F5', 'Base'),
+    ('AK11133 Dark Green Grey', 'AK Interactive', '#4A5D4A', 'Base'),
+    ('AK11140 Grass Green', 'AK Interactive', '#7CFC00', 'Layer'),
+    ('AK11142 Deep Green', 'AK Interactive', '#004D00', 'Base'),
+    ('AK11029 Black', 'AK Interactive', '#000000', 'Base'),
+    ('AK11006 Silver Grey', 'AK Interactive', '#C4C4C4', 'Layer'),
+    ('AK11019 Graphite', 'AK Interactive', '#383838', 'Base'),
+    ('AK11001 White', 'AK Interactive', '#FFFFFF', 'Base'),
+    ('AK11167 Anthracite Grey', 'AK Interactive', '#3D3D3D', 'Base'),
+    ('AK11173 Ocean Blue', 'AK Interactive', '#006994', 'Base'),
+    ('AK11078 Medium Orange', 'AK Interactive', '#FF8C00', 'Base'),
+    ('AK11115 Light Earth', 'AK Interactive', '#C4A57B', 'Layer'),
+    ('AK11102 Deep Brown', 'AK Interactive', '#4A2C2A', 'Base'),
+    ('AK11110 Leather Brown', 'AK Interactive', '#8B4513', 'Base'),
+    ('AK11405 Dark Shadow Flesh', 'AK Interactive', '#8B6355', 'Shade'),
+    ('AK11401 Base Flesh', 'AK Interactive', '#E0AC69', 'Base'),
+    ('AK11404 Shadow Flesh', 'AK Interactive', '#C48B6D', 'Shade'),
+    ('AK11402 Light Flesh', 'AK Interactive', '#F5DEB3', 'Layer'),
+    ('AK11403 Highlight Flesh', 'AK Interactive', '#FFE4C4', 'Layer'),
+    ('AK11406 Reddish Black', 'AK Interactive', '#2B1B17', 'Shade'),
+    ('AK11208 Dark Aluminium', 'AK Interactive', '#A9A9A9', 'Metallic'),
+    ('AK11118 Ochre', 'AK Interactive', '#CC7722', 'Base'),
+    ('AK11212 Gun Metal', 'AK Interactive', '#2C3539', 'Metallic'),
+    ('AK11210 Natural Steel', 'AK Interactive', '#71797E', 'Metallic'),
+    ('AK11193 Rusty Gold', 'AK Interactive', '#B8860B', 'Metallic'),
+    ('AK11198 Burnt Tin', 'AK Interactive', '#6B4E31', 'Metallic'),
+    ('AK11191 Gold', 'AK Interactive', '#FFD700', 'Metallic'),
+    -- Primers & Varnishes
+    ('AK11252 Ultra Matt Varnish', 'AK Interactive', NULL, 'Technical'),
+    ('AK11242 Black Primer', 'AK Interactive', '#000000', 'Primer'),
+    ('AK11241 Grey Primer', 'AK Interactive', '#808080', 'Primer'),
+    -- Specialty Bottles
+    ('AK11268 Oxidized Bronze', 'AK Interactive', '#4A9A8A', 'Technical'),
+    ('AK472 Xtreme Metal Bronze', 'AK Interactive', '#CD7F32', 'Metallic'),
+    ('AK11265 Xtreme Metal Iron', 'AK Interactive', '#434B4D', 'Metallic'),
 
-    -- AK Interactive Reds
-    ('Red', 'AK Interactive', '#C1272D', 'Base'),
-    ('Dark Red', 'AK Interactive', '#8B0000', 'Base'),
-    ('Burnt Red', 'AK Interactive', '#A52A2A', 'Layer'),
+    -- ============================================
+    -- ARMY PAINTER WARPAINTS FANATIC
+    -- ============================================
 
-    -- AK Interactive Blues
-    ('Blue', 'AK Interactive', '#0047AB', 'Base'),
-    ('Dark Blue', 'AK Interactive', '#00008B', 'Base'),
-    ('Light Blue', 'AK Interactive', '#87CEEB', 'Layer'),
-    ('Sky Blue', 'AK Interactive', '#87CEEB', 'Layer'),
-
-    -- AK Interactive Greens
-    ('Green', 'AK Interactive', '#228B22', 'Base'),
-    ('Dark Green', 'AK Interactive', '#006400', 'Base'),
-    ('Olive Green', 'AK Interactive', '#556B2F', 'Base'),
-
-    -- AK Interactive Yellows/Oranges
-    ('Yellow', 'AK Interactive', '#FFFF00', 'Base'),
-    ('Dark Yellow', 'AK Interactive', '#FFB300', 'Base'),
-    ('Orange', 'AK Interactive', '#FF8C00', 'Base'),
-
-    -- AK Interactive Browns/Earth Tones
-    ('Brown', 'AK Interactive', '#8B4513', 'Base'),
-    ('Dark Brown', 'AK Interactive', '#654321', 'Base'),
-    ('Leather Brown', 'AK Interactive', '#8B4513', 'Base'),
-    ('Flat Earth', 'AK Interactive', '#8B7355', 'Base'),
-
-    -- AK Interactive Flesh Tones
-    ('Pale Flesh', 'AK Interactive', '#F5DEB3', 'Layer'),
-    ('Basic Flesh', 'AK Interactive', '#E0AC69', 'Base'),
-    ('Dark Flesh', 'AK Interactive', '#CD853F', 'Shade'),
-
-    -- AK Interactive Metallics
-    ('Silver', 'AK Interactive', '#C0C0C0', 'Metallic'),
-    ('Gold', 'AK Interactive', '#FFD700', 'Metallic'),
-    ('Bronze', 'AK Interactive', '#CD7F32', 'Metallic'),
-    ('Copper', 'AK Interactive', '#B87333', 'Metallic'),
-    ('Gunmetal', 'AK Interactive', '#2C3539', 'Metallic'),
-
-    -- Army Painter Warband Core Colors
-    ('Fog Grey', 'Army Painter', '#D3D3D3', 'Base'),
-    ('Drake Tooth', 'Army Painter', '#F5E6D3', 'Base'),
-    ('Dungeon Grey', 'Army Painter', '#696969', 'Base'),
-    ('Hardened Carapace', 'Army Painter', '#2F4F4F', 'Base'),
-    ('Necrotic Flesh', 'Army Painter', '#8B8B7A', 'Base'),
-    ('Wasteland Soil', 'Army Painter', '#8B7355', 'Base'),
-
-    -- Army Painter Warband Reds/Oranges
-    ('Plasma Coil Glow', 'Army Painter', '#FF6347', 'Layer'),
-    ('Lava Orange', 'Army Painter', '#FF4500', 'Layer'),
-
-    -- Army Painter Warband Blues/Purples
-    ('Deep Blue', 'Army Painter', '#000080', 'Base'),
-    ('Electric Blue', 'Army Painter', '#7DF9FF', 'Layer'),
-    ('Alien Purple', 'Army Painter', '#8B00FF', 'Base'),
-
-    -- Army Painter Warband Greens
-    ('Mutation Green', 'Army Painter', '#32CD32', 'Layer'),
-    ('Venom', 'Army Painter', '#ADFF2F', 'Layer'),
-    ('Crusted Sore', 'Army Painter', '#556B2F', 'Base'),
-
-    -- Army Painter Warband Metallics
-    ('Plate Mail Metal', 'Army Painter', '#B8B8B8', 'Metallic'),
-    ('Greedy Gold', 'Army Painter', '#FFD700', 'Metallic'),
-    ('Weapon Bronze', 'Army Painter', '#CD7F32', 'Metallic'),
-
-    -- Army Painter Warband Washes/Shades
-    ('Dark Tone', 'Army Painter', '#000000', 'Shade'),
-    ('Strong Tone', 'Army Painter', '#8B4513', 'Shade'),
-    ('Soft Tone', 'Army Painter', '#D2B48C', 'Shade'),
-    ('Military Shader', 'Army Painter', '#556B2F', 'Shade'),
-
-    -- AK Interactive Real Colors (Additional)
-    ('Ivory', 'AK Interactive', '#FFFFF0', 'Base'),
-    ('Cream', 'AK Interactive', '#FFFDD0', 'Base'),
-    ('Buff', 'AK Interactive', '#F0DC82', 'Layer'),
-    ('Sand Yellow', 'AK Interactive', '#FCE883', 'Base'),
-    ('Desert Yellow', 'AK Interactive', '#EDC9AF', 'Base'),
-    ('Ochre', 'AK Interactive', '#CC7722', 'Base'),
-    ('Rust', 'AK Interactive', '#B7410E', 'Technical'),
-    ('Bright Red', 'AK Interactive', '#FF0000', 'Layer'),
-    ('Scarlet', 'AK Interactive', '#FF2400', 'Layer'),
-    ('Deep Red', 'AK Interactive', '#850101', 'Base'),
-    ('Pink', 'AK Interactive', '#FFC0CB', 'Layer'),
-    ('Purple', 'AK Interactive', '#800080', 'Base'),
-    ('Violet', 'AK Interactive', '#8F00FF', 'Layer'),
-    ('Navy Blue', 'AK Interactive', '#000080', 'Base'),
-    ('Prussian Blue', 'AK Interactive', '#003153', 'Base'),
-    ('Turquoise', 'AK Interactive', '#40E0D0', 'Layer'),
-    ('Cyan', 'AK Interactive', '#00FFFF', 'Layer'),
-    ('Bright Green', 'AK Interactive', '#00FF00', 'Layer'),
-    ('Lime Green', 'AK Interactive', '#32CD32', 'Layer'),
-    ('Forest Green', 'AK Interactive', '#228B22', 'Base'),
-    ('Camouflage Green', 'AK Interactive', '#78866B', 'Base'),
-    ('Sea Green', 'AK Interactive', '#2E8B57', 'Layer'),
-
-    -- AK Interactive Weathering/Effects
-    ('Rust Streaks', 'AK Interactive', '#8B4513', 'Technical'),
-    ('Dark Wash', 'AK Interactive', '#1A1A1A', 'Wash'),
-    ('Brown Wash', 'AK Interactive', '#654321', 'Wash'),
-    ('Green Wash', 'AK Interactive', '#2F4F2F', 'Wash'),
-    ('Blue Wash', 'AK Interactive', '#191970', 'Wash'),
-
-    -- Army Painter Warband Additional Colors
-    ('Pure Red', 'Army Painter', '#ED1C24', 'Base'),
-    ('Royal Blue', 'Army Painter', '#4169E1', 'Base'),
-    ('Moon Dust', 'Army Painter', '#E5E4E2', 'Layer'),
-    ('Spaceship Exterior', 'Army Painter', '#36454F', 'Base'),
-    ('Brainmatter Beige', 'Army Painter', '#C9A9A6', 'Base'),
-    ('Glistening Blood', 'Army Painter', '#8B0000', 'Technical'),
-    ('Toxic Boils', 'Army Painter', '#9ACD32', 'Technical'),
-    ('Hydra Turquoise', 'Army Painter', '#00CED1', 'Layer'),
-    ('Scaly Hide', 'Army Painter', '#4B5320', 'Base'),
-    ('Dirt Spatter', 'Army Painter', '#8B7355', 'Technical'),
-    ('Arid Earth', 'Army Painter', '#D2B48C', 'Base'),
-    ('Filthy Cape', 'Army Painter', '#483C32', 'Base'),
-    ('Zombie Shader', 'Army Painter', '#556B2F', 'Shade'),
-    ('Blue Tone', 'Army Painter', '#4169E1', 'Shade'),
-    ('Red Tone', 'Army Painter', '#8B0000', 'Shade'),
-    ('Green Tone', 'Army Painter', '#228B22', 'Shade'),
-    ('Purple Tone', 'Army Painter', '#800080', 'Shade'),
-
-    -- AK Interactive Metallics (Extended)
-    ('Steel', 'AK Interactive', '#B0C4DE', 'Metallic'),
-    ('Brass', 'AK Interactive', '#B5A642', 'Metallic'),
-    ('Dark Steel', 'AK Interactive', '#4C4C4C', 'Metallic'),
-    ('Chrome', 'AK Interactive', '#E5E4E2', 'Metallic'),
-    ('Iron', 'AK Interactive', '#808080', 'Metallic'),
-    ('Old Brass', 'AK Interactive', '#8B7355', 'Metallic'),
-    ('Burnt Metal', 'AK Interactive', '#6E4B26', 'Metallic'),
-
-    -- Army Painter Warband Metallics (Extended)
-    ('Dark Silver', 'Army Painter', '#696969', 'Metallic'),
-    ('Shining Silver', 'Army Painter', '#E8E8E8', 'Metallic'),
+    -- Most Wanted Set (WP8071) - 22 paints
+    ('Night Sky', 'Army Painter', '#1A1F3A', 'Base'),
+    ('Uniform Grey', 'Army Painter', '#5E6A73', 'Base'),
+    ('Skeleton Bone', 'Army Painter', '#D3C89D', 'Layer'),
+    ('Brainmatter Beige', 'Army Painter', '#F1F0E0', 'Layer'),
+    ('Dragon Red', 'Army Painter', '#9A1B1E', 'Base'),
+    ('Basilisk Red', 'Army Painter', '#7A2A1A', 'Base'),
+    ('Talisman Teal', 'Army Painter', '#4A9A8A', 'Layer'),
+    ('Wild Green', 'Army Painter', '#3A6A4A', 'Layer'),
+    ('Olive Drab', 'Army Painter', '#5A6A3A', 'Base'),
+    ('Warped Yellow', 'Army Painter', '#EACA2A', 'Layer'),
+    ('Burning Ore', 'Army Painter', '#DA5A2A', 'Base'),
+    ('Warlock Magenta', 'Army Painter', '#AA5A9A', 'Layer'),
+    ('Cultist Purple', 'Army Painter', '#5A3A7A', 'Base'),
+    ('Baron Blue', 'Army Painter', '#5A7AAA', 'Layer'),
+    ('Jasper Skin', 'Army Painter', '#A06040', 'Base'),
+    ('Onyx Skin', 'Army Painter', '#402010', 'Base'),
+    ('Dark Skin Shade', 'Army Painter', '#4A2A2A', 'Wash'),
+    ('True Copper', 'Army Painter', '#DA8A5A', 'Metallic'),
     ('Gun Metal', 'Army Painter', '#2C3539', 'Metallic'),
-    ('Rough Iron', 'Army Painter', '#5C5C5C', 'Metallic')
+    ('Disgusting Slime', 'Army Painter', '#8ACA3A', 'Technical'),
+    ('Dry Blood', 'Army Painter', '#5A1A1A', 'Technical'),
+    ('Brush-On Primer', 'Army Painter', NULL, 'Technical'),
+
+    -- Washes Paint Set (WP8068) - 10 washes
+    ('Dark Tone', 'Army Painter', '#1A1A1A', 'Wash'),
+    ('Strong Tone', 'Army Painter', '#5A4A3A', 'Wash'),
+    ('Soft Tone', 'Army Painter', '#8A7A6A', 'Wash'),
+    ('Light Tone', 'Army Painter', '#BAAAA0', 'Wash'),
+    ('Sepia Tone', 'Army Painter', '#6A5A4A', 'Wash'),
+    ('Dark Red Tone', 'Army Painter', '#4A1A1A', 'Wash'),
+    ('Military Shade', 'Army Painter', '#4A5A3A', 'Wash'),
+    ('Dark Blue Tone', 'Army Painter', '#1A2A4A', 'Wash'),
+    ('Purple Tone', 'Army Painter', '#4A2A5A', 'Wash'),
+    ('Strong Skin Shade', 'Army Painter', '#6A4A4A', 'Wash'),
+
+    -- ============================================
+    -- ARMY PAINTER STORMLIGHT PAINT SET
+    -- ============================================
+
+    -- Stormlight Set - 11 Themed Colors
+    ('Stormlight Blue', 'Army Painter', '#5AAACA', 'Base'),
+    ('Kholin Blue', 'Army Painter', '#1A4A8A', 'Base'),
+    ('Parshendi Red', 'Army Painter', '#8A2A2A', 'Base'),
+    ('Shardplate Silver', 'Army Painter', '#C0C8D0', 'Metallic'),
+    ('Highstorm Grey', 'Army Painter', '#6A7A8A', 'Base'),
+    ('Rosharan Stone', 'Army Painter', '#9A8A7A', 'Base'),
+    ('Chasmfiend Chitin', 'Army Painter', '#3A4A3A', 'Base'),
+    ('Spherelight Gold', 'Army Painter', '#EACA3A', 'Metallic'),
+    ('Voidbringer Purple', 'Army Painter', '#4A2A5A', 'Base'),
+    ('Cremling Brown', 'Army Painter', '#6A5040', 'Base'),
+    ('Everstorm Black', 'Army Painter', '#1A1A2A', 'Base'),
+
+    -- ============================================
+    -- MONUMENT HOBBIES PRO ACRYL
+    -- Signature Series Set 5 - Flameon Miniatures
+    -- (Gold NMM palette - warm ochre tones)
+    -- ============================================
+    ('Bright Pale Yellow', 'Monument Hobbies', '#FFF4D6', 'Layer'),
+    ('Bright Yellow Ochre', 'Monument Hobbies', '#E6B84D', 'Layer'),
+    ('Caramel Brown', 'Monument Hobbies', '#A67B4A', 'Base'),
+    ('Orange Brown', 'Monument Hobbies', '#B5652A', 'Base'),
+    ('Dark Orange Brown', 'Monument Hobbies', '#7A4420', 'Base'),
+    ('Dark Green Brown', 'Monument Hobbies', '#4A4A30', 'Shade')
 )
 INSERT INTO miniatures.cl_paints (name, manufacturer, color_hex, paint_type)
 SELECT pd.paint_name, pd.manufacturer_name, pd.color_hex, pd.paint_type
