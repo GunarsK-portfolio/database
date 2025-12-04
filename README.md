@@ -28,7 +28,7 @@ definitions, relationships, and column descriptions
 ### Schemas
 
 | Schema | Purpose | Tables |
-|--------|---------|--------|
+| ------ | ------- | ------ |
 | `auth` | Authentication | users |
 | `portfolio` | Professional portfolio | profile, work_experience, certifications, projects, skills |
 | `miniatures` | Miniature painting | themes, projects, techniques, paints, files |
@@ -38,7 +38,7 @@ definitions, relationships, and column descriptions
 ### Database Users
 
 | User | Password (dev) | Purpose |
-|------|----------------|---------|
+| ---- | -------------- | ------- |
 | `portfolio_owner` | portfolio_owner_dev_pass | Flyway migrations (DDL) |
 | `portfolio_admin` | portfolio_admin_dev_pass | Admin API (CRUD) |
 | `portfolio_public` | portfolio_public_dev_pass | Public API (SELECT only) |
@@ -170,7 +170,7 @@ docker-compose run --rm flyway migrate
 This database is used by:
 
 | Service | User | Access |
-|---------|------|--------|
+| ------- | ---- | ------ |
 | Flyway | portfolio_owner | DDL + CRUD |
 | auth-service | portfolio_admin | CRUD |
 | admin-api | portfolio_admin | CRUD |
@@ -274,7 +274,8 @@ docker-compose run --rm flyway repair
 
 **Configuration:**
 
-- AWS region is set to `eu-west-1` by default in the workflow. Override by setting `AWS_REGION` secret if deploying to a different region.
+- AWS region is set to `eu-west-1` by default in the workflow.
+  Override by setting `AWS_REGION` secret if deploying to a different region.
 
 **AWS Resources Required:**
 
@@ -319,7 +320,7 @@ Before running migrations in production:
 
    ```bash
    aws rds create-db-cluster-snapshot \
-     --db-cluster-snapshot-identifier portfolio-pre-deploy-$(date +%Y%m%d-%H%M%S) \
+     --db-cluster-snapshot-identifier pre-deploy-$(date +%Y%m%d) \
      --db-cluster-identifier portfolio-aurora-cluster \
      --region eu-west-1
    ```
@@ -333,8 +334,10 @@ Before running migrations in production:
    - Review migration SQL files for destructive operations
 
 4. **Understand Flyway Behavior**
-   - **Idempotency**: Flyway tracks applied migrations in `flyway_schema_history` table, preventing re-application
-   - **No Rollback**: Production does not use Flyway undo scripts; recovery requires restoring from snapshot
+   - **Idempotency**: Flyway tracks applied migrations in
+     `flyway_schema_history` table, preventing re-application
+   - **No Rollback**: Production does not use Flyway undo scripts; recovery
+     requires restoring from snapshot
    - **Validation**: Flyway validates migration checksums before applying new migrations
 
 5. **Recovery Plan**

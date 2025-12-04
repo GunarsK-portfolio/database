@@ -15,7 +15,7 @@ PostgreSQL 18 database with 5 schemas, 18 tables, and 3-tier user security model
 ## Database Users
 
 | User | Role | Access Level |
-|------|------|--------------|
+| ---- | ---- | ------------ |
 | portfolio_owner | DDL | Full database ownership, schema changes |
 | portfolio_admin | CRUD | INSERT, UPDATE, DELETE, SELECT on all tables |
 | portfolio_public | Read-only | SELECT only on all tables |
@@ -29,7 +29,7 @@ PostgreSQL 18 database with 5 schemas, 18 tables, and 3-tier user security model
 Authentication users for admin portal access.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique user identifier |
 | username | VARCHAR(50) | UNIQUE, NOT NULL | Unique username for login |
 | email | VARCHAR(100) | UNIQUE, NOT NULL | Unique email address |
@@ -55,7 +55,7 @@ Authentication users for admin portal access.
 Generic S3 file storage for images, PDFs, documents, and other files.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique file identifier |
 | s3_key | VARCHAR(500) | UNIQUE, NOT NULL | Unique S3 object key (path in bucket) |
 | s3_bucket | VARCHAR(100) | NOT NULL | S3 bucket name where file is stored |
@@ -79,7 +79,7 @@ Generic S3 file storage for images, PDFs, documents, and other files.
 Portfolio owner profile information (singleton table, should have exactly 1 row).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique profile identifier |
 | full_name | VARCHAR(100) | NOT NULL | Full name of portfolio owner |
 | title | VARCHAR(100) | | Professional title or headline |
@@ -108,7 +108,7 @@ Portfolio owner profile information (singleton table, should have exactly 1 row)
 Work experience history for portfolio owner.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique work experience identifier |
 | company | VARCHAR(100) | NOT NULL | Company or organization name |
 | position | VARCHAR(100) | NOT NULL | Job title or position |
@@ -134,7 +134,7 @@ Work experience history for portfolio owner.
 Professional certifications and credentials.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique certification identifier |
 | name | VARCHAR(200) | NOT NULL | Certification name (e.g., AWS Certified Solutions Architect) |
 | issuer | VARCHAR(100) | NOT NULL | Issuing organization (e.g., Amazon Web Services) |
@@ -161,7 +161,7 @@ Professional certifications and credentials.
 Professional software development portfolio projects.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique project identifier |
 | title | VARCHAR(200) | NOT NULL | Project title |
 | category | VARCHAR(100) | | Project category (e.g., Web App, Mobile App, CLI Tool) |
@@ -204,7 +204,7 @@ Professional software development portfolio projects.
 Skill categories classifier (e.g., Frontend, Backend, Database, DevOps).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique skill type identifier |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | Skill type name (e.g., Frontend, Backend, Database, DevOps) |
 | description | TEXT | | Skill type description |
@@ -228,7 +228,7 @@ Skill categories classifier (e.g., Frontend, Backend, Database, DevOps).
 Individual skills and technologies.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique skill identifier |
 | skill | VARCHAR(100) | UNIQUE, NOT NULL | Skill or technology name (e.g., React, PostgreSQL, Docker) |
 | skill_type_id | BIGINT | FK → cl_skill_types, NOT NULL | Skill category |
@@ -258,7 +258,7 @@ Individual skills and technologies.
 Junction table linking portfolio projects to skills/technologies (many-to-many).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique identifier |
 | project_id | BIGINT | FK → portfolio_projects, NOT NULL | Portfolio project |
 | skill_id | BIGINT | FK → skills, NOT NULL | Skill or technology used |
@@ -287,7 +287,7 @@ Junction table linking portfolio projects to skills/technologies (many-to-many).
 Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 40k).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique theme identifier |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | Theme name (e.g., Stormlight Archive) |
 | description | TEXT | | Theme description (supports markdown) |
@@ -316,7 +316,7 @@ Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 
 Individual miniature painting projects.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique project identifier |
 | title | VARCHAR(200) | NOT NULL | Project title (e.g., Kaladin Stormblessed) |
 | description | TEXT | | Project description, techniques used, notes (supports markdown) |
@@ -352,7 +352,7 @@ Individual miniature painting projects.
 Master list of miniature painting techniques (classifier).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique technique identifier |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | Technique name (e.g., Drybrushing, NMM, Wet Blending) |
 | description | TEXT | | Technique description and usage notes |
@@ -378,7 +378,7 @@ Master list of miniature painting techniques (classifier).
 Master list of miniature paints (classifier).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique paint identifier |
 | name | VARCHAR(200) | NOT NULL | Paint name (e.g., Abaddon Black, Ushabti Bone) |
 | manufacturer | VARCHAR(100) | NOT NULL | Manufacturer (e.g., AK Interactive, Army Painter) |
@@ -408,7 +408,7 @@ Master list of miniature paints (classifier).
 Junction table linking miniature projects to painting techniques (many-to-many).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique identifier |
 | miniature_project_id | BIGINT | FK → miniature_projects, NOT NULL | Miniature project |
 | technique_id | BIGINT | FK → cl_techniques, NOT NULL | Painting technique used |
@@ -436,7 +436,7 @@ Junction table linking miniature projects to painting techniques (many-to-many).
 Junction table linking miniature projects to paints (many-to-many).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique identifier |
 | miniature_project_id | BIGINT | FK → miniature_projects, NOT NULL | Miniature project |
 | paint_id | BIGINT | FK → cl_paints, NOT NULL | Paint used |
@@ -464,7 +464,7 @@ Junction table linking miniature projects to paints (many-to-many).
 Junction table linking miniature projects to images (many-to-many).
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique identifier |
 | miniature_project_id | BIGINT | FK → miniature_projects, NOT NULL | Miniature project |
 | file_id | BIGINT | FK → storage.files, NOT NULL | Image file from S3 |
@@ -496,7 +496,7 @@ Junction table linking miniature projects to images (many-to-many).
 Audit trail of all data changes in the system.
 
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+| ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique audit log identifier |
 | table_name | VARCHAR(100) | NOT NULL | Name of the table that was modified |
 | schema_name | VARCHAR(100) | NOT NULL | Schema name (auth, portfolio, miniatures, storage) |
