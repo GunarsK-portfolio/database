@@ -1,0 +1,4 @@
+# Applied migrations - cannot be modified
+migrations/V20251128000100__create_contact_messages_table.sql
+migrations/V20251128000200__create_recipients_table.sql
+migrations/V20251128000300__create_delivery_attempts_table.sql

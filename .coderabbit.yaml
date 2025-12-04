@@ -19,4 +19,4 @@ reviews:
       enabled: true
 chat:
   auto_reply: true
-tone_instructions: "Focus on migration safety, schema design, indexing, seed idempotency, and data integrity. Flag migrations that could cause data loss. Verify foreign keys and constraints."
+tone_instructions: "Review migration safety, schema design, indexes, seed idempotency, data integrity, and constraints."

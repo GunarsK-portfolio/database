@@ -34,7 +34,7 @@ Configure these secrets in your repository:
 **Settings → Secrets and variables → Actions → New repository secret**
 
 | Secret | Description | Example Value |
-|--------|-------------|---------------|
+| ------ | ----------- | ------------- |
 | `CI_DB_USER` | PostgreSQL superuser for CI tests | `postgres` |
 | `CI_DB_PASSWORD` | Password for CI database | `test_password_123` |
 | `CI_DB_NAME` | Database name for CI tests (must be `postgres` for pg_cron) | `postgres` |
