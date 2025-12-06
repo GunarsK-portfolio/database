@@ -16,7 +16,7 @@ ON CONFLICT (username) DO UPDATE SET
     email = excluded.email,
     role_id = excluded.role_id;
 
--- Demo user: read-only access for portfolio demonstration
+-- Demo user: limited access for portfolio demonstration (no messaging)
 -- Password: demo123 (bcrypt hash)
 INSERT INTO auth.users (username, email, password_hash, role_id)
 VALUES (
@@ -26,7 +26,7 @@ VALUES (
     (
         SELECT id
         FROM auth.roles
-        WHERE code = 'read-only'
+        WHERE code = 'demo-user'
     )
 )
 ON CONFLICT (username) DO UPDATE SET
