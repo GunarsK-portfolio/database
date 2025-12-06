@@ -29,11 +29,12 @@ definitions, relationships, and column descriptions
 
 | Schema | Purpose | Tables |
 | ------ | ------- | ------ |
-| `auth` | Authentication | users |
+| `auth` | Authentication & RBAC | users, roles, resources, role_scopes |
 | `portfolio` | Professional portfolio | profile, work_experience, certifications, projects, skills |
 | `miniatures` | Miniature painting | themes, projects, techniques, paints, files |
+| `messaging` | Contact form | contact_messages, recipients, delivery_attempts |
 | `storage` | File storage (S3) | files |
-| `audit` | Change tracking | change_log, query_stats (view) |
+| `audit` | Change tracking | change_log, action_log, query_stats (view) |
 
 ### Database Users
 
@@ -41,6 +42,7 @@ definitions, relationships, and column descriptions
 | ---- | -------------- | ------- |
 | `portfolio_owner` | portfolio_owner_dev_pass | Flyway migrations (DDL) |
 | `portfolio_admin` | portfolio_admin_dev_pass | Admin API (CRUD) |
+| `portfolio_messaging` | portfolio_messaging_dev_pass | Messaging worker (messaging schema) |
 | `portfolio_public` | portfolio_public_dev_pass | Public API (SELECT only) |
 
 ⚠️ **Change passwords in production!**
@@ -71,17 +73,18 @@ docker-compose run --rm flyway migrate
 
 ## Migrations
 
-**23 versioned migrations** + **5 seed files** = Complete database setup
+**38 versioned migrations** + **8 repeatable seed files** = Complete database setup
 
 Includes:
 
 - Database users and schemas
 - Core tables (users, profile, work experience, certifications, projects, skills)
 - Miniature painting tables (themes, projects, techniques, paints, files)
+- Messaging tables (contact messages, recipients, delivery attempts)
+- RBAC tables (roles, resources, role_scopes)
 - Audit logging with automatic triggers
 - Query performance monitoring setup
-- Seed data: admin user, 120+ paints, 20 techniques, skill types,
-  sample portfolio data
+- Seed data: admin/demo users, roles, 120+ paints, 20 techniques, skill types
 
 ## Features
 
@@ -120,6 +123,9 @@ postgresql://portfolio_owner:portfolio_owner_dev_pass@localhost:5432/portfolio
 
 # Admin (for admin-api, auth-service)
 postgresql://portfolio_admin:portfolio_admin_dev_pass@localhost:5432/portfolio
+
+# Messaging (for messaging-worker)
+postgresql://portfolio_messaging:portfolio_messaging_dev_pass@localhost:5432/portfolio
 
 # Public (for public-api)
 postgresql://portfolio_public:portfolio_public_dev_pass@localhost:5432/portfolio
@@ -172,8 +178,10 @@ This database is used by:
 | Service | User | Access |
 | ------- | ---- | ------ |
 | Flyway | portfolio_owner | DDL + CRUD |
-| auth-service | portfolio_admin | CRUD |
+| auth-service | portfolio_admin | CRUD (auth schema) |
 | admin-api | portfolio_admin | CRUD |
+| files-api | portfolio_admin | CRUD (storage schema) |
+| messaging-worker | portfolio_messaging | CRUD (messaging schema) |
 | public-api | portfolio_public | SELECT only |
 
 ## Backup and Restore
@@ -221,7 +229,7 @@ SELECT
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
 FROM pg_tables
-WHERE schemaname IN ('auth', 'portfolio', 'miniatures', 'storage', 'audit')
+WHERE schemaname IN ('auth', 'portfolio', 'miniatures', 'messaging', 'storage', 'audit')
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
 
