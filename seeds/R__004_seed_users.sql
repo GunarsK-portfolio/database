@@ -5,7 +5,7 @@ INSERT INTO auth.users (username, email, password_hash, role_id)
 VALUES (
     'admin',
     'admin@gunarsk.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    '$2b$10$XpkI4APkFljrOnbXYUa1X.bgYIEByPlC4woG8jxH08rKm/tB0/T5i',
     (
         SELECT id
         FROM auth.roles
