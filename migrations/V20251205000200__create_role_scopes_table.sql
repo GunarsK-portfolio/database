@@ -8,3 +8,4 @@ CREATE TABLE auth.role_scopes (
 );
 
 CREATE INDEX idx_role_scopes_role_id ON auth.role_scopes (role_id);
+CREATE INDEX idx_role_scopes_resource_id ON auth.role_scopes (resource_id);
