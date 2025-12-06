@@ -2,5 +2,6 @@
 INSERT INTO auth.roles (code, name)
 VALUES
 ('admin', 'Administrator'),
-('read-only', 'Read Only')
+('read-only', 'Read Only'),
+('demo-user', 'Demo User')
 ON CONFLICT (code) DO UPDATE SET name = excluded.name;
