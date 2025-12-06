@@ -2,13 +2,14 @@
 
 ## Overview
 
-PostgreSQL 18 database with 5 schemas, 18 tables, and 3-tier user security model.
+PostgreSQL 18 database with 6 schemas, 25 tables, and 4-tier user security model.
 
 ## Schemas
 
-- **auth** - Authentication and user management
+- **auth** - Authentication, user management, and RBAC
 - **portfolio** - Professional portfolio content (work experience, projects, skills)
 - **miniatures** - Miniature painting projects and related data
+- **messaging** - Contact form messages and delivery tracking
 - **storage** - Generic S3 file storage
 - **audit** - Audit logging and change tracking
 
@@ -18,6 +19,7 @@ PostgreSQL 18 database with 5 schemas, 18 tables, and 3-tier user security model
 | ---- | ---- | ------------ |
 | portfolio_owner | DDL | Full database ownership, schema changes |
 | portfolio_admin | CRUD | INSERT, UPDATE, DELETE, SELECT on all tables |
+| portfolio_messaging | CRUD | INSERT, UPDATE, DELETE, SELECT on messaging schema |
 | portfolio_public | Read-only | SELECT only on all tables |
 
 ## Tables by Schema
@@ -34,17 +36,79 @@ Authentication users for admin portal access.
 | username | VARCHAR(50) | UNIQUE, NOT NULL | Unique username for login |
 | email | VARCHAR(100) | UNIQUE, NOT NULL | Unique email address |
 | password_hash | VARCHAR(255) | NOT NULL | Bcrypt hashed password |
+| role_id | INT | FK → roles | User's role for RBAC permissions |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when user was created |
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when user was last updated |
+
+**Foreign Keys:**
+
+- `role_id` → `auth.roles(id)`
 
 **Indexes:**
 
 - `idx_users_username` on username
 - `idx_users_email` on email
+- `idx_users_role_id` on role_id
 
 **Triggers:**
 
 - `update_users_updated_at` - Auto-updates updated_at on UPDATE
+
+---
+
+#### roles
+
+User roles for role-based access control.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | SERIAL | PRIMARY KEY | Unique role identifier |
+| code | VARCHAR(50) | UNIQUE, NOT NULL | Role code (e.g., admin, read-only) |
+| name | VARCHAR(100) | NOT NULL | Human-readable role name |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when role was created |
+
+**Seed Data:** admin, read-only
+
+---
+
+#### resources
+
+Protected resources for permission assignments.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | SERIAL | PRIMARY KEY | Unique resource identifier |
+| code | VARCHAR(50) | UNIQUE, NOT NULL | Resource code (e.g., profile, projects) |
+| name | VARCHAR(100) | NOT NULL | Human-readable resource name |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when resource was created |
+
+**Seed Data:** profile, work_experience, certifications, projects, skills,
+miniatures, files, users, messages
+
+---
+
+#### role_scopes
+
+Permission assignments linking roles to resources with access levels.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| role_id | INT | FK → roles, PK | Role reference |
+| resource_id | INT | FK → resources, PK | Resource reference |
+| permission_level | VARCHAR(10) | NOT NULL, CHECK | Access level: none, read, edit, delete |
+
+**Foreign Keys:**
+
+- `role_id` → `auth.roles(id)` ON DELETE CASCADE
+- `resource_id` → `auth.resources(id)` ON DELETE CASCADE
+
+**Primary Key:** (role_id, resource_id)
+
+**Indexes:**
+
+- `idx_role_scopes_role_id` on role_id
+
+**Permission Hierarchy:** none(0) < read(1) < edit(2) < delete(3)
 
 ---
 
@@ -489,6 +553,80 @@ Junction table linking miniature projects to images (many-to-many).
 
 ---
 
+### messaging schema
+
+#### contact_messages
+
+Contact form submissions from website visitors.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | BIGSERIAL | PRIMARY KEY | Unique message identifier |
+| name | VARCHAR(100) | NOT NULL | Sender's name |
+| email | VARCHAR(255) | NOT NULL | Sender's email address |
+| subject | VARCHAR(200) | | Message subject line |
+| message | TEXT | NOT NULL | Message content |
+| status | VARCHAR(20) | DEFAULT 'pending' | Processing status: pending, processing, sent, failed |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when message was submitted |
+| updated_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when message was last updated |
+
+**Indexes:**
+
+- `idx_contact_messages_status` on status
+- `idx_contact_messages_created_at` on created_at DESC
+
+**Triggers:**
+
+- `update_contact_messages_updated_at` - Auto-updates updated_at on UPDATE
+
+---
+
+#### recipients
+
+Email recipients for contact message forwarding.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | BIGSERIAL | PRIMARY KEY | Unique recipient identifier |
+| email | VARCHAR(255) | UNIQUE, NOT NULL | Recipient email address |
+| name | VARCHAR(100) | | Recipient display name |
+| is_active | BOOLEAN | DEFAULT TRUE | Whether recipient receives messages |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when recipient was added |
+
+**Indexes:**
+
+- `idx_recipients_is_active` on is_active
+
+---
+
+#### delivery_attempts
+
+Tracks email delivery attempts for each message-recipient pair.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | BIGSERIAL | PRIMARY KEY | Unique attempt identifier |
+| message_id | BIGINT | FK → contact_messages, NOT NULL | Contact message reference |
+| recipient_id | BIGINT | FK → recipients, NOT NULL | Recipient reference |
+| status | VARCHAR(20) | NOT NULL | Delivery status: pending, sent, failed |
+| attempt_count | INT | DEFAULT 0 | Number of delivery attempts |
+| last_attempt_at | TIMESTAMPTZ | | Timestamp of last delivery attempt |
+| error_message | TEXT | | Error message if delivery failed |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when attempt was created |
+
+**Foreign Keys:**
+
+- `message_id` → `messaging.contact_messages(id)` ON DELETE CASCADE
+- `recipient_id` → `messaging.recipients(id)` ON DELETE CASCADE
+
+**Indexes:**
+
+- `idx_delivery_attempts_message_id` on message_id
+- `idx_delivery_attempts_recipient_id` on recipient_id
+- `idx_delivery_attempts_status` on status
+
+---
+
 ### audit schema
 
 #### change_log
@@ -536,6 +674,11 @@ COMMIT;
 
 ## Relationships
 
+### Auth Domain
+
+- `users.role_id` → `roles` (N:1)
+- `roles` ←→ `resources` via `role_scopes` (M:N)
+
 ### Portfolio Domain
 
 - `profile.avatar_file_id` → `storage.files` (1:1)
@@ -551,6 +694,11 @@ COMMIT;
 - `miniature_projects` ←→ `cl_techniques` via `miniature_techniques` (M:N)
 - `miniature_projects` ←→ `cl_paints` via `miniature_paints` (M:N)
 - `miniature_projects` ←→ `storage.files` via `miniature_files` (M:N)
+
+### Messaging Domain
+
+- `delivery_attempts.message_id` → `contact_messages` (N:1)
+- `delivery_attempts.recipient_id` → `recipients` (N:1)
 
 ## Features
 
@@ -580,6 +728,9 @@ postgresql://portfolio_owner:portfolio_owner_dev_pass@localhost:5432/portfolio
 
 # API/backend (CRUD operations)
 postgresql://portfolio_admin:portfolio_admin_dev_pass@localhost:5432/portfolio
+
+# Messaging worker (messaging schema)
+postgresql://portfolio_messaging:portfolio_messaging_dev_pass@localhost:5432/portfolio
 
 # Public/read-only access
 postgresql://portfolio_public:portfolio_public_dev_pass@localhost:5432/portfolio
