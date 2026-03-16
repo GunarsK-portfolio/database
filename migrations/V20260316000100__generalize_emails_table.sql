@@ -28,11 +28,13 @@ ALTER TABLE messaging.emails
 ADD CONSTRAINT chk_emails_email_format
 CHECK (email IS NULL OR email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
--- Ensure every email has at least one target
--- (sender email for contact forms, recipient_email for auth emails)
+-- Enforce required target based on email type
 ALTER TABLE messaging.emails
 ADD CONSTRAINT chk_emails_has_target
-CHECK (email IS NOT NULL OR recipient_email IS NOT NULL);
+CHECK (
+    (type = 'contact_form' AND email IS NOT NULL)
+    OR (type IN ('email_verification', 'password_reset', '2fa_code') AND recipient_email IS NOT NULL)
+);
 
 -- Replace status constraint (same values, new name)
 ALTER TABLE messaging.emails

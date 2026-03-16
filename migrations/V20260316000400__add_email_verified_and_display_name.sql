@@ -1,6 +1,20 @@
 -- Add email verification status and display name to users
 ALTER TABLE auth.users
-ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ADD COLUMN email_verified BOOLEAN;
+
+-- Service accounts are trusted; mark svc-auth as verified
+UPDATE auth.users
+SET email_verified = TRUE
+WHERE username = 'svc-auth';
+
+-- Set remaining users to unverified, then enforce NOT NULL + default
+UPDATE auth.users
+SET email_verified = FALSE
+WHERE email_verified IS NULL;
+
+ALTER TABLE auth.users
+ALTER COLUMN email_verified SET NOT NULL,
+ALTER COLUMN email_verified SET DEFAULT FALSE;
 
 ALTER TABLE auth.users
 ADD COLUMN display_name VARCHAR(100);
