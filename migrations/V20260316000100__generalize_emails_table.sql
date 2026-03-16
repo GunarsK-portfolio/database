@@ -56,9 +56,9 @@ ADD CONSTRAINT chk_emails_type
 CHECK (type IN ('contact_form', 'email_verification', 'password_reset', '2fa_code'));
 
 -- Rename existing indexes
-ALTER INDEX idx_contact_messages_status RENAME TO idx_emails_status;
-ALTER INDEX idx_contact_messages_created_at RENAME TO idx_emails_created_at;
-ALTER INDEX idx_contact_messages_email RENAME TO idx_emails_email;
+ALTER INDEX messaging.idx_contact_messages_status RENAME TO idx_emails_status;
+ALTER INDEX messaging.idx_contact_messages_created_at RENAME TO idx_emails_created_at;
+ALTER INDEX messaging.idx_contact_messages_email RENAME TO idx_emails_email;
 
 -- Add new indexes
 CREATE INDEX idx_emails_type ON messaging.emails (type);
