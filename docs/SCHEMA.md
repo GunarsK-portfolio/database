@@ -348,7 +348,8 @@ Junction table linking portfolio projects to skills/technologies (many-to-many).
 
 #### miniature_themes
 
-Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 40k).
+Thematic collections of miniature projects
+(e.g., Stormlight Archive, Warhammer 40k).
 
 | Column | Type | Constraints | Description |
 | ------ | ---- | ----------- | ----------- |

@@ -229,7 +229,10 @@ SELECT
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
 FROM pg_tables
-WHERE schemaname IN ('auth', 'portfolio', 'miniatures', 'messaging', 'storage', 'audit')
+WHERE schemaname IN (
+    'auth', 'portfolio', 'miniatures',
+    'messaging', 'storage', 'audit'
+)
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
 
