@@ -64,7 +64,8 @@ ALTER INDEX messaging.idx_contact_messages_email RENAME TO idx_emails_email;
 
 -- Add new indexes
 CREATE INDEX idx_emails_type ON messaging.emails (type);
-CREATE INDEX idx_emails_recipient_email ON messaging.emails (recipient_email);
+CREATE INDEX idx_emails_recipient_email ON messaging.emails (recipient_email)
+WHERE recipient_email IS NOT NULL;
 
 -- Rename delivery_attempts FK constraint
 ALTER TABLE messaging.delivery_attempts
