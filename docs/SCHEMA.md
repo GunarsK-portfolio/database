@@ -9,7 +9,7 @@ PostgreSQL 18 database with 6 schemas, 25 tables, and 4-tier user security model
 - **auth** - Authentication, user management, and RBAC
 - **portfolio** - Professional portfolio content (work experience, projects, skills)
 - **miniatures** - Miniature painting projects and related data
-- **messaging** - Contact form messages and delivery tracking
+- **messaging** - Email messages and delivery tracking
 - **storage** - Generic S3 file storage
 - **audit** - Audit logging and change tracking
 
@@ -36,6 +36,8 @@ Authentication users for admin portal access.
 | username | VARCHAR(50) | UNIQUE, NOT NULL | Unique username for login |
 | email | VARCHAR(100) | UNIQUE, NOT NULL | Unique email address |
 | password_hash | VARCHAR(255) | NOT NULL | Bcrypt hashed password |
+| email_verified | BOOLEAN | NOT NULL, DEFAULT FALSE | Whether the user has verified their email address |
+| display_name | VARCHAR(100) | | User-chosen display name (optional) |
 | role_id | INT | FK → roles | User's role for RBAC permissions |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when user was created |
 | updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Timestamp when user was last updated |
@@ -109,6 +111,28 @@ Permission assignments linking roles to resources with access levels.
 - `idx_role_scopes_role_id` on role_id
 
 **Permission Hierarchy:** none(0) < read(1) < edit(2) < delete(3)
+
+---
+
+#### verification_tokens
+
+Email verification tokens for user email confirmation.
+
+| Column | Type | Constraints | Description |
+| ------ | ---- | ----------- | ----------- |
+| id | BIGSERIAL | PRIMARY KEY | Unique token identifier |
+| user_id | BIGINT | FK → users, NOT NULL | Reference to the user requesting verification |
+| email | VARCHAR(100) | NOT NULL | Email address being verified (may differ from current user email if changed) |
+| token | VARCHAR(64) | UNIQUE, NOT NULL | Unique verification token (64 hex chars) |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when token was generated |
+
+**Foreign Keys:**
+
+- `user_id` → `auth.users(id)` ON DELETE CASCADE
+
+**Indexes:**
+
+- `idx_verification_tokens_user_id` on user_id
 
 ---
 
@@ -348,7 +372,8 @@ Junction table linking portfolio projects to skills/technologies (many-to-many).
 
 #### miniature_themes
 
-Thematic collections of miniature projects (e.g., Stormlight Archive, Warhammer 40k).
+Thematic collections of miniature projects
+(e.g., Stormlight Archive, Warhammer 40k).
 
 | Column | Type | Constraints | Description |
 | ------ | ---- | ----------- | ----------- |
@@ -555,29 +580,43 @@ Junction table linking miniature projects to images (many-to-many).
 
 ### messaging schema
 
-#### contact_messages
+#### emails
 
-Contact form submissions from website visitors.
+Email messages for all services.
 
 | Column | Type | Constraints | Description |
 | ------ | ---- | ----------- | ----------- |
-| id | BIGSERIAL | PRIMARY KEY | Unique message identifier |
-| name | VARCHAR(100) | NOT NULL | Sender's name |
-| email | VARCHAR(255) | NOT NULL | Sender's email address |
+| id | BIGSERIAL | PRIMARY KEY | Unique email identifier |
+| type | VARCHAR(50) | NOT NULL, DEFAULT 'contact_form' | Email type: contact_form, email_verification, password_reset, 2fa_code |
+| name | VARCHAR(100) | | Sender's name (contact forms only) |
+| email | VARCHAR(255) | | Sender's email address (required for contact_form) |
+| recipient_email | VARCHAR(255) | | Direct recipient email (required for auth emails) |
 | subject | VARCHAR(200) | | Message subject line |
 | message | TEXT | NOT NULL | Message content |
-| status | VARCHAR(20) | DEFAULT 'pending' | Processing status: pending, processing, sent, failed |
-| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when message was submitted |
-| updated_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when message was last updated |
+| status | VARCHAR(20) | DEFAULT 'pending' | Processing status: pending, queued, sent, failed |
+| created_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when email was created |
+| updated_at | TIMESTAMPTZ | DEFAULT NOW() | Timestamp when email was last updated |
+
+**Constraints:**
+
+- `chk_emails_has_target` - contact_form requires email; auth types require recipient_email
+- `chk_emails_email_format` - email format validation (allows NULL)
+- `chk_emails_recipient_email_format` - recipient_email format validation
+- `chk_emails_status` - status IN (pending, queued, sent, failed)
+- `chk_emails_type` - type IN (contact_form, email_verification, etc.)
 
 **Indexes:**
 
-- `idx_contact_messages_status` on status
-- `idx_contact_messages_created_at` on created_at DESC
+- `idx_emails_status` on status
+- `idx_emails_created_at` on created_at DESC
+- `idx_emails_email` on email
+- `idx_emails_type` on type
+- `idx_emails_recipient_email` on recipient_email
 
 **Triggers:**
 
-- `update_contact_messages_updated_at` - Auto-updates updated_at on UPDATE
+- `update_emails_updated_at` - Auto-updates updated_at on UPDATE
+- `audit_emails` - Audit logging on INSERT, UPDATE, DELETE
 
 ---
 
@@ -606,7 +645,7 @@ Tracks email delivery attempts for each message-recipient pair.
 | Column | Type | Constraints | Description |
 | ------ | ---- | ----------- | ----------- |
 | id | BIGSERIAL | PRIMARY KEY | Unique attempt identifier |
-| message_id | BIGINT | FK → contact_messages, NOT NULL | Contact message reference |
+| message_id | BIGINT | FK → emails, NOT NULL | Email reference |
 | recipient_id | BIGINT | FK → recipients, NOT NULL | Recipient reference |
 | status | VARCHAR(20) | NOT NULL | Delivery status: pending, sent, failed |
 | attempt_count | INT | DEFAULT 0 | Number of delivery attempts |
@@ -616,7 +655,7 @@ Tracks email delivery attempts for each message-recipient pair.
 
 **Foreign Keys:**
 
-- `message_id` → `messaging.contact_messages(id)` ON DELETE CASCADE
+- `message_id` → `messaging.emails(id)` ON DELETE CASCADE
 - `recipient_id` → `messaging.recipients(id)` ON DELETE CASCADE
 
 **Indexes:**
@@ -678,6 +717,7 @@ COMMIT;
 
 - `users.role_id` → `roles` (N:1)
 - `roles` ←→ `resources` via `role_scopes` (M:N)
+- `verification_tokens.user_id` → `users` (N:1)
 
 ### Portfolio Domain
 
@@ -697,7 +737,7 @@ COMMIT;
 
 ### Messaging Domain
 
-- `delivery_attempts.message_id` → `contact_messages` (N:1)
+- `delivery_attempts.message_id` → `emails` (N:1)
 - `delivery_attempts.recipient_id` → `recipients` (N:1)
 
 ## Features
