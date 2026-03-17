@@ -29,9 +29,16 @@ ALTER TABLE auth.verification_tokens
 ADD CONSTRAINT chk_verification_tokens_type
 CHECK (type IN ('email_verification', 'password_reset'));
 
--- Indexes
-CREATE INDEX idx_verification_tokens_type
-ON auth.verification_tokens (type);
+-- Backfill expires_at for existing tokens so they don't remain valid forever
+UPDATE auth.verification_tokens
+SET expires_at = created_at + INTERVAL '24 hours'
+WHERE expires_at IS NULL;
+
+-- Indexes: composite (user_id, type) replaces the standalone user_id index
+DROP INDEX IF EXISTS auth.idx_verification_tokens_user_id;
+
+CREATE INDEX idx_verification_tokens_user_id_type
+ON auth.verification_tokens (user_id, type);
 
 CREATE INDEX idx_verification_tokens_used_at
 ON auth.verification_tokens (used_at)
