@@ -7,7 +7,6 @@ CREATE TABLE auth.user_roles (
     CONSTRAINT unique_user_role UNIQUE (user_id, role_id)
 );
 
-CREATE INDEX idx_user_roles_user_id ON auth.user_roles (user_id);
 CREATE INDEX idx_user_roles_role_id ON auth.user_roles (role_id);
 
 COMMENT ON TABLE auth.user_roles IS 'Junction table mapping users to their assigned roles';
