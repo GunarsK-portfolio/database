@@ -24,4 +24,3 @@ ALTER COLUMN password_hash DROP NOT NULL;
 COMMENT ON COLUMN auth.users.password_hash IS 'Bcrypt hash, NULL for OAuth-only users';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON auth.oauth_accounts TO portfolio_admin;
-GRANT SELECT ON auth.oauth_accounts TO portfolio_public;
