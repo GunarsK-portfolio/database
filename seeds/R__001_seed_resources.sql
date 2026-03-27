@@ -10,5 +10,8 @@ VALUES
 ('messages', 'Contact Messages'),
 ('recipients', 'Message Recipients'),
 ('files', 'Files'),
-('users', 'Users')
+('users', 'Users'),
+('classifiers', 'Classifiers'),
+('heroes', 'Heroes'),
+('campaigns', 'Campaigns')
 ON CONFLICT (code) DO UPDATE SET name = excluded.name;

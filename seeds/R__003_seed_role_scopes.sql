@@ -39,3 +39,52 @@ SELECT
 FROM auth.roles AS r
 CROSS JOIN auth.resources AS res
 WHERE r.code = 'demo-user';
+
+-- rpg-admin: classifiers=delete, heroes=delete, campaigns=delete, files=delete
+DELETE FROM auth.role_scopes
+WHERE role_id IN (
+    SELECT id
+    FROM auth.roles
+    WHERE code IN ('rpg-admin', 'rpg-gm', 'rpg-player')
+);
+
+INSERT INTO auth.role_scopes (role_id, resource_id, permission_level)
+SELECT
+    r.id AS role_id,
+    res.id AS resource_id,
+    'delete' AS permission_level
+FROM auth.roles AS r
+CROSS JOIN auth.resources AS res
+WHERE
+    r.code = 'rpg-admin'
+    AND res.code IN ('classifiers', 'heroes', 'campaigns', 'files');
+
+-- rpg-gm: classifiers=read, heroes=delete, campaigns=delete, files=delete
+INSERT INTO auth.role_scopes (role_id, resource_id, permission_level)
+SELECT
+    r.id AS role_id,
+    res.id AS resource_id,
+    CASE
+        WHEN res.code = 'classifiers' THEN 'read'
+        ELSE 'delete'
+    END AS permission_level
+FROM auth.roles AS r
+CROSS JOIN auth.resources AS res
+WHERE
+    r.code = 'rpg-gm'
+    AND res.code IN ('classifiers', 'heroes', 'campaigns', 'files');
+
+-- rpg-player: classifiers=read, heroes=delete, campaigns=delete, files=delete
+INSERT INTO auth.role_scopes (role_id, resource_id, permission_level)
+SELECT
+    r.id AS role_id,
+    res.id AS resource_id,
+    CASE
+        WHEN res.code = 'classifiers' THEN 'read'
+        ELSE 'delete'
+    END AS permission_level
+FROM auth.roles AS r
+CROSS JOIN auth.resources AS res
+WHERE
+    r.code = 'rpg-player'
+    AND res.code IN ('classifiers', 'heroes', 'campaigns', 'files');
