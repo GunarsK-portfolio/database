@@ -59,30 +59,26 @@ WHERE
     r.code = 'rpg-admin'
     AND res.code IN ('classifiers', 'heroes', 'campaigns', 'files');
 
--- rpg-gm: classifiers=read, heroes=delete, campaigns=delete, files=delete
+-- rpg-gm: classifiers=delete, heroes=delete, campaigns=delete, files=delete
+-- Homebrew ownership is enforced at the DB layer (user_id check), so 'delete'
+-- on classifiers only grants access to the user's own homebrew rows.
 INSERT INTO auth.role_scopes (role_id, resource_id, permission_level)
 SELECT
     r.id AS role_id,
     res.id AS resource_id,
-    CASE
-        WHEN res.code = 'classifiers' THEN 'read'
-        ELSE 'delete'
-    END AS permission_level
+    'delete' AS permission_level
 FROM auth.roles AS r
 CROSS JOIN auth.resources AS res
 WHERE
     r.code = 'rpg-gm'
     AND res.code IN ('classifiers', 'heroes', 'campaigns', 'files');
 
--- rpg-player: classifiers=read, heroes=delete, campaigns=delete, files=delete
+-- rpg-player: classifiers=delete, heroes=delete, campaigns=delete, files=delete
 INSERT INTO auth.role_scopes (role_id, resource_id, permission_level)
 SELECT
     r.id AS role_id,
     res.id AS resource_id,
-    CASE
-        WHEN res.code = 'classifiers' THEN 'read'
-        ELSE 'delete'
-    END AS permission_level
+    'delete' AS permission_level
 FROM auth.roles AS r
 CROSS JOIN auth.resources AS res
 WHERE
